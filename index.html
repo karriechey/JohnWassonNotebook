@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>John Wasson Notebook</title>
+    <title>Meteorite Notebook Viewer</title>
     <style>
         body {
             margin: 0;
@@ -23,6 +23,11 @@
             position: sticky;
             top: 0;
             z-index: 100;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            flex-wrap: wrap;
+            gap: 10px;
         }
         
         .search-bar {
@@ -31,6 +36,21 @@
             padding: 8px;
             border: 1px solid #ccc;
             border-radius: 4px;
+        }
+        
+        .search-options {
+            display: flex;
+            gap: 10px;
+            align-items: center;
+            margin-top: 5px;
+        }
+        
+        .notebook-title {
+            margin: 0;
+            padding: 10px 0;
+            text-align: center;
+            font-size: 1.8em;
+            color: #333;
         }
         
         .container {
@@ -121,6 +141,51 @@
             opacity: 1;
         }
         
+        .loading {
+            text-align: center;
+            padding: 20px;
+            font-size: 1.2em;
+        }
+        
+        .search-results {
+            margin: 10px 0;
+            padding: 10px;
+            background-color: #f0f0f0;
+            border-radius: 5px;
+            display: none;
+        }
+        
+        .search-results-count {
+            font-weight: bold;
+            margin-bottom: 10px;
+        }
+        
+        .search-nav {
+            display: flex;
+            gap: 10px;
+            align-items: center;
+            justify-content: center;
+            margin-top: 10px;
+        }
+        
+        .search-nav button {
+            padding: 5px 10px;
+            background-color: #007bff;
+            color: white;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+        }
+        
+        .search-nav button:hover {
+            background-color: #0056b3;
+        }
+        
+        .search-nav button:disabled {
+            background-color: #ccc;
+            cursor: not-allowed;
+        }
+        
         @media (max-width: 768px) {
             .page-section {
                 flex-direction: column;
@@ -141,17 +206,49 @@
 <body>
     <div class="header">
         <input type="text" id="searchInput" class="search-bar" placeholder="Search for keywords...">
+        <div class="search-options">
+            <label>
+                <input type="checkbox" id="searchTitle" checked> Search in titles
+            </label>
+            <label>
+                <input type="checkbox" id="searchContent" checked> Search in content
+            </label>
+            <button id="searchButton">Search</button>
+        </div>
+    </div>
+    
+    <h1 class="notebook-title" id="notebookTitle">Loading Notebook...</h1>
+    
+    <div class="search-results" id="searchResults">
+        <div class="search-results-count" id="searchResultsCount"></div>
+        <div class="search-nav">
+            <button id="prevResult" disabled>Previous</button>
+            <span id="currentResult">0/0</span>
+            <button id="nextResult" disabled>Next</button>
+        </div>
     </div>
     
     <div class="container" id="notebookContainer">
-        <!-- Page sections will be inserted here -->
+        <div class="loading" id="loadingMessage">Loading notebook data...</div>
     </div>
     
     <button id="backToTop" class="back-to-top" title="Back to Top">↑</button>
 
     <script>
-        // Page data with titles and content from the text file
-        const pageData = [
+        // Configuration object - change these values for each notebook
+        const notebookConfig = {
+            title: "John Wasson Notebook",
+            imagePrefix: "An-Ar_page-",
+            imageSuffix: ".jpg",
+            totalPages: 20,
+            pagesPerSection: "An-Ar" // Prefix for pages in this section
+        };
+
+        // Page data - this would be loaded from external JSON in a production environment
+        let pageData = [];
+
+        // Keep this embedded pageData or load from external JSON
+        pageData = [
             {
                 title: "Anderson (Ohio, USA)",
                 content: "30 III 68 From Harvard, entire 170g mass. Broke off small fragment. Rounded olivine, in many sized spheres from 0.3 to 1.0 cm. Some \"coalesced.\" There seems to be a border between coalesced nodules - indicates Schreiber, or differently oriented crystal structures, or both. Thin deposits of Schreiber seem to surround olivine. The olivine only appears to occupy ~50% of area in this section, and is definitely not close-packed. One metallic area is ~1.5 cm across. Small fragment shows some surface oxidation, but not too much."
@@ -234,11 +331,31 @@
             }
         ];
 
+        // Initialize the viewer
         document.addEventListener('DOMContentLoaded', function() {
-            const container = document.getElementById('notebookContainer');
-            const backToTopBtn = document.getElementById('backToTop');
+            initializeNotebookViewer();
+        });
+
+        // Main initialization function
+        function initializeNotebookViewer() {
+            // Set notebook title
+            document.getElementById('notebookTitle').textContent = notebookConfig.title;
+            document.title = notebookConfig.title;
             
-            // Create the notebook contents
+            // Remove loading message
+            document.getElementById('loadingMessage').style.display = 'none';
+            
+            // Create notebook content
+            createNotebookPages();
+            
+            // Set up event listeners
+            setupEventListeners();
+        }
+
+        // Create notebook pages
+        function createNotebookPages() {
+            const container = document.getElementById('notebookContainer');
+            
             for (let i = 0; i < pageData.length; i++) {
                 const page = pageData[i];
                 const pageNumber = i + 1;
@@ -258,9 +375,9 @@
                 const img = document.createElement('img');
                 // Format the page number with padding zeros
                 const paddedNumber = pageNumber.toString().padStart(4, '0');
-                img.src = `An-Ar_page-${paddedNumber}.jpg`;
+                img.src = `${notebookConfig.imagePrefix}${paddedNumber}${notebookConfig.imageSuffix}`;
                 img.alt = `Page ${pageNumber}: ${page.title}`;
-                img.loading = 'lazy'; // Lazy load images for better performance
+                img.loading = 'lazy';
                 
                 imageWrapper.appendChild(img);
                 imageContainer.appendChild(imageWrapper);
@@ -271,7 +388,7 @@
                 
                 const pageNum = document.createElement('div');
                 pageNum.className = 'page-number';
-                pageNum.textContent = `Page ${pageNumber} of 20`;
+                pageNum.textContent = `Page ${pageNumber} of ${notebookConfig.totalPages}`;
                 
                 const pageTitle = document.createElement('h2');
                 pageTitle.className = 'page-title';
@@ -292,60 +409,24 @@
                 // Add the section to the container
                 container.appendChild(section);
             }
+        }
+
+        // Set up event listeners
+        function setupEventListeners() {
+            const searchInput = document.getElementById('searchInput');
+            const searchButton = document.getElementById('searchButton');
+            const backToTopBtn = document.getElementById('backToTop');
+            const prevResultBtn = document.getElementById('prevResult');
+            const nextResultBtn = document.getElementById('nextResult');
             
             // Search functionality
-            const searchInput = document.getElementById('searchInput');
             searchInput.addEventListener('keyup', function(event) {
                 if (event.key === 'Enter') {
-                    const searchTerm = this.value.toLowerCase().trim();
-                    
-                    if (searchTerm === '') {
-                        return;
-                    }
-                    
-                    // Remove previous highlights
-                    document.querySelectorAll('mark').forEach(mark => {
-                        const parent = mark.parentNode;
-                        parent.replaceChild(document.createTextNode(mark.textContent), mark);
-                        parent.normalize();
-                    });
-                    
-                    // Find matches and highlight them
-                    let foundMatch = false;
-                    let firstMatchElement = null;
-                    
-                    pageData.forEach((page, index) => {
-                        const pageNumber = index + 1;
-                        const textContent = document.querySelector(`#page-${pageNumber} .text-content`);
-                        const content = page.content.toLowerCase();
-                        
-                        if (content.includes(searchTerm)) {
-                            foundMatch = true;
-                            
-                            // Highlight matches
-                            const text = textContent.textContent;
-                            const regex = new RegExp(searchTerm, 'gi');
-                            const highlightedText = text.replace(regex, match => `<mark>${match}</mark>`);
-                            textContent.innerHTML = highlightedText;
-                            
-                            // Store the first match element for scrolling
-                            if (!firstMatchElement) {
-                                firstMatchElement = document.querySelector(`#page-${pageNumber} mark`);
-                            }
-                        }
-                    });
-                    
-                    if (foundMatch && firstMatchElement) {
-                        // Scroll to the first match
-                        firstMatchElement.scrollIntoView({
-                            behavior: 'smooth',
-                            block: 'center'
-                        });
-                    } else {
-                        alert('No matches found for: ' + searchTerm);
-                    }
+                    performSearch();
                 }
             });
+            
+            searchButton.addEventListener('click', performSearch);
             
             // Back to top button
             window.addEventListener('scroll', function() {
@@ -362,7 +443,215 @@
                     behavior: 'smooth'
                 });
             });
-        });
-    </script>
+            
+            // Search navigation
+            prevResultBtn.addEventListener('click', function() {
+                navigateSearchResults('prev');
+            });
+            
+            nextResultBtn.addEventListener('click', function() {
+                navigateSearchResults('next');
+            });
+        }
+
+        // Current search state
+        let searchState = {
+            matches: [],
+            currentMatchIndex: -1
+        };
+
+        // Perform search
+        function performSearch() {
+            const searchTerm = document.getElementById('searchInput').value.toLowerCase().trim();
+            const searchInTitle = document.getElementById('searchTitle').checked;
+            const searchInContent = document.getElementById('searchContent').checked;
+            
+            if (searchTerm === '') {
+                return;
+            }
+            
+            // Clear previous search results
+            clearSearchHighlights();
+            
+            // Reset search state
+            searchState = {
+                matches: [],
+                currentMatchIndex: -1
+            };
+            
+            // Find matches
+            for (let i = 0; i < pageData.length; i++) {
+                const pageNumber = i + 1;
+                const page = pageData[i];
+                const titleMatches = searchInTitle && page.title.toLowerCase().includes(searchTerm);
+                const contentMatches = searchInContent && page.content.toLowerCase().includes(searchTerm);
+                
+                if (titleMatches || contentMatches) {
+                    const pageSection = document.querySelector(`#page-${pageNumber}`);
+                    
+                    // Highlight title matches
+                    if (titleMatches) {
+                        const titleElement = pageSection.querySelector('.page-title');
+                        highlightText(titleElement, searchTerm);
+                        
+                        // Add to matches
+                        const marks = titleElement.querySelectorAll('mark');
+                        for (let mark of marks) {
+                            searchState.matches.push({
+                                element: mark,
+                                pageNumber: pageNumber
+                            });
+                        }
+                    }
+                    
+                    // Highlight content matches
+                    if (contentMatches) {
+                        const contentElement = pageSection.querySelector('.text-content');
+                        highlightText(contentElement, searchTerm);
+                        
+                        // Add to matches
+                        const marks = contentElement.querySelectorAll('mark');
+                        for (let mark of marks) {
+                            searchState.matches.push({
+                                element: mark,
+                                pageNumber: pageNumber
+                            });
+                        }
+                    }
+                }
+            }
+            
+            // Update search results UI
+            updateSearchResultsUI();
+            
+            // Navigate to first result if found
+            if (searchState.matches.length > 0) {
+                navigateSearchResults('next');
+            } else {
+                alert('No matches found for: ' + searchTerm);
+            }
+        }
+
+        // Highlight text in an element
+        function highlightText(element, searchTerm) {
+            const text = element.textContent;
+            const regex = new RegExp(searchTerm, 'gi');
+            const highlightedText = text.replace(regex, match => `<mark>${match}</mark>`);
+            element.innerHTML = highlightedText;
+        }
+
+        // Clear all search highlights
+        function clearSearchHighlights() {
+            document.querySelectorAll('mark').forEach(mark => {
+                const parent = mark.parentNode;
+                parent.replaceChild(document.createTextNode(mark.textContent), mark);
+                parent.normalize();
+            });
+            
+            // Hide search results UI
+            document.getElementById('searchResults').style.display = 'none';
+        }
+
+        // Update search results UI
+        function updateSearchResultsUI() {
+            const resultsCount = searchState.matches.length;
+            const resultsElement = document.getElementById('searchResults');
+            const resultsCountElement = document.getElementById('searchResultsCount');
+            const currentResultElement = document.getElementById('currentResult');
+            const prevResultBtn = document.getElementById('prevResult');
+            const nextResultBtn = document.getElementById('nextResult');
+            
+            if (resultsCount > 0) {
+                resultsElement.style.display = 'block';
+                resultsCountElement.textContent = `${resultsCount} result${resultsCount !== 1 ? 's' : ''} found`;
+                
+                // Update current result indicator
+                currentResultElement.textContent = `${searchState.currentMatchIndex + 1}/${resultsCount}`;
+                
+                // Enable/disable navigation buttons
+                prevResultBtn.disabled = searchState.currentMatchIndex <= 0;
+                nextResultBtn.disabled = searchState.currentMatchIndex >= resultsCount - 1;
+            } else {
+                resultsElement.style.display = 'none';
+            }
+        }
+
+        // Navigate search results
+        function navigateSearchResults(direction) {
+        const matches = searchState.matches;
+    
+        if (matches.length === 0) {
+        return;
+     }
+    
+    // Update current match index
+     if (direction === 'next') {
+        searchState.currentMatchIndex++;
+        if (searchState.currentMatchIndex >= matches.length) {
+            searchState.currentMatchIndex = 0;
+        }
+    } else if (direction === 'prev') {
+        searchState.currentMatchIndex--;
+        if (searchState.currentMatchIndex < 0) {
+            searchState.currentMatchIndex = matches.length - 1;
+        }
+    }
+    
+    // Get current match
+    const currentMatch = matches[searchState.currentMatchIndex];
+    
+    // Scroll to match
+    currentMatch.element.scrollIntoView({
+        behavior: 'smooth',
+        block: 'center'
+    });
+    
+    // Highlight current match
+    matches.forEach((match, index) => {
+        if (index === searchState.currentMatchIndex) {
+            match.element.style.backgroundColor = 'orange';
+        } else {
+            match.element.style.backgroundColor = 'yellow';
+        }
+    });
+    
+    // Update UI
+    updateSearchResultsUI();
+    }
+
+    // Function to handle image loading errors
+    function handleImageError(img) {
+    img.onerror = function() {
+        this.src = 'placeholder-image.jpg';
+        this.alt = 'Image not available';
+    };
+}
+
+    // Initialize the application when the DOM is loaded
+    document.addEventListener('DOMContentLoaded', function() {
+    initializeNotebookViewer();
+    });
+
+            
+            // Back to top button
+            window.addEventListener('scroll', function() {
+                if (window.pageYOffset > 300) {
+                    backToTopBtn.style.display = 'block';
+                } else {
+                    backToTopBtn.style.display = 'none';
+                }
+            });
+            
+            backToTopBtn.addEventListener('click', function() {
+                window.scrollTo({
+                    top: 0,
+                    behavior: 'smooth'
+                });
+            });    </script>
 </body>
 </html>
+
+
+
+
+
