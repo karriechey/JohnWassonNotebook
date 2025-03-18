@@ -1,0 +1,368 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>John Wasson Notebook</title>
+    <style>
+        body {
+            margin: 0;
+            padding: 0;
+            font-family: Arial, sans-serif;
+            background-color: #f5f5f5;
+            background-image: linear-gradient(#ddd 1px, transparent 1px),
+                              linear-gradient(90deg, #ddd 1px, transparent 1px);
+            background-size: 20px 20px;
+        }
+        
+        .header {
+            padding: 15px;
+            background-color: #f0f0f0;
+            border-bottom: 1px solid #ddd;
+            text-align: center;
+            position: sticky;
+            top: 0;
+            z-index: 100;
+        }
+        
+        .search-bar {
+            width: 80%;
+            max-width: 600px;
+            padding: 8px;
+            border: 1px solid #ccc;
+            border-radius: 4px;
+        }
+        
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+        
+        .page-section {
+            display: flex;
+            background-color: white;
+            margin-bottom: 40px;
+            box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+            border-radius: 5px;
+            overflow: hidden;
+        }
+        
+        .image-container {
+            flex: 1;
+            padding: 20px;
+            border-right: 1px solid #ddd;
+            min-width: 300px;
+        }
+        
+        .image-wrapper {
+            border: 1px solid #ccc;
+            padding: 10px;
+            background-color: white;
+        }
+        
+        .image-wrapper img {
+            width: 100%;
+            display: block;
+        }
+        
+        .text-container {
+            flex: 1;
+            padding: 20px;
+            border-left: 1px solid #ddd;
+        }
+        
+        .text-content {
+            white-space: pre-wrap;
+            line-height: 1.6;
+        }
+        
+        .page-number {
+            background-color: #f0f0f0;
+            padding: 5px 10px;
+            border-radius: 3px;
+            display: inline-block;
+            margin-bottom: 10px;
+            font-weight: bold;
+        }
+        
+        .page-title {
+            font-size: 1.5em;
+            margin-top: 0;
+            margin-bottom: 15px;
+            color: #333;
+        }
+        
+        mark {
+            background-color: yellow;
+            padding: 0 2px;
+        }
+        
+        .back-to-top {
+            position: fixed;
+            bottom: 20px;
+            right: 20px;
+            background-color: #333;
+            color: white;
+            border: none;
+            border-radius: 50%;
+            width: 50px;
+            height: 50px;
+            text-align: center;
+            line-height: 50px;
+            font-size: 20px;
+            cursor: pointer;
+            opacity: 0.7;
+            transition: opacity 0.3s;
+            display: none;
+        }
+        
+        .back-to-top:hover {
+            opacity: 1;
+        }
+        
+        @media (max-width: 768px) {
+            .page-section {
+                flex-direction: column;
+            }
+            
+            .image-container {
+                border-right: none;
+                border-bottom: 1px solid #ddd;
+                min-width: auto;
+            }
+            
+            .text-container {
+                border-left: none;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <input type="text" id="searchInput" class="search-bar" placeholder="Search for keywords...">
+    </div>
+    
+    <div class="container" id="notebookContainer">
+        <!-- Page sections will be inserted here -->
+    </div>
+    
+    <button id="backToTop" class="back-to-top" title="Back to Top">↑</button>
+
+    <script>
+        // Page data with titles and content from the text file
+        const pageData = [
+            {
+                title: "Anderson (Ohio, USA)",
+                content: "30 III 68 From Harvard, entire 170g mass. Broke off small fragment. Rounded olivine, in many sized spheres from 0.3 to 1.0 cm. Some \"coalesced.\" There seems to be a border between coalesced nodules - indicates Schreiber, or differently oriented crystal structures, or both. Thin deposits of Schreiber seem to surround olivine. The olivine only appears to occupy ~50% of area in this section, and is definitely not close-packed. One metallic area is ~1.5 cm across. Small fragment shows some surface oxidation, but not too much."
+            },
+            {
+                title: "Angelica",
+                content: "9 II 70 USNM#2177, 4.8g, Area ~ 2 cm²; polished and etched (30 sec);  \nrather regular Widmanstätten pattern, band width ~0.5-1 mm; this piece contains an inclusion of Troilite and Cohenite (?) (see picture), and a small hole without oxidation products; most of the plessite shows micro-Widmanstätten structure. There are some very thin long cracks in this piece; surface slightly oxidized"
+            },
+            {
+                title: "Angra Dos Reis (vion)",
+                content: "IN 381\n\nHex JA  \n5.46% Ni, .2% P  \n57 ppm Ga, 188 ppm Ge, 31 ppm Ir  \nCohenite, Troilite, Schreibersite  \nVFB\n\nHexahedrite  \n5.5% Ni  \n.2% P  \nMany Habolites present  \nNeumann lines  \nSome Schreibersite  \n2 Vhard irregular inclusions, probably schreibersite  \nEffects of torsion visible along one side.\n\nINAA (1) 11 I 77  \n(2) 21 IX 77"
+            },
+            {
+                title: "Annaheim (Saskatchewan, Canada)",
+                content: "10 Jan 1976. 17g sample from Geol Surv. Ottawa. Polished and etched 20 sec nital. The structure is of mud, distinctness. The kam bands are difficult to orient, but the smallest are in the range of 1.3-1.6 mm, thus Oz. A few tiny 0.2 x 0.02 mm schreib inch. Plesite is ~10% of area. It is a half dark, a half banded, in several directions. No cracks, no oxidation.\n\nNo obvious carbide, silicate or sulphide.\n\nRemoved 3 mm wide block from one end, adjacent to existing cut\n\nDWP. 4 Dec 1979\n\n23 IV 80. One small inclusion(frailty) in next 3 mm block. To be avoided."
+            },
+            {
+                title: "Anoka, Minn.",
+                content: "25. III. s, Looking again at sample, originally S. G. now about 4g, from Voshage, Mding (Aka Widmann-struckere. Several Vein schrebersite inclusions - no troilite visible. Lots of quite attractive plessite of matte texture. Kama band width 10.10 x 0.20 mm, thus off on Buchwald system."
+            },
+            {
+                title: "Hugs makssalik W2111",
+                content: "14 Jan 2012 - JTO\n\nRusty slab ~3 mm thick; total mass 62.0g  \nCoarsest octahedrite; lam. bandwidth ~5 mm  \nMuch corrosion at ham. grain boundaries but  \ninteriors seem to be polished metal.  \nMetal seems to have a frosty appearance,  \nprobably the result of a deep etch. We did not  \nyet prepare a new surface.  \nI was not able to find any inclusions."
+            },
+            {
+                title: "Amyujskij",
+                content: "IN 1360  \nSmall sample from KMAU Moscow 5/7. Seems to be a hexahedrite; abundant Neumann lines, no taenite.  \nCurious \"whitish\" mottled area in lower left - may be some sort of reheating effect. Under high power I can see many tiny (10 µm x 100 µm) rhabdites in the unreheated area, but extensive resorption and even incipient melting? (domains of clear koled 60 x 100 µm in size) in the mottled areas.  \nJTW 3.4.90"
+            },
+            {
+                title: "Antofagasta (Antofagasta, Chile)",
+                content: "13. Aug. 71. Two pieces from NMNH 1207. Both have had olivine removed. Pallasite seems to be relatively rich in metal. Olivine grains were rounded, and typical dimensions were apparently about 0.5 cm diameter. The one flat surface of the larger piece we received includes one area of clear metal about 1.1 cm across, and at least 2-3 mm thick in this section. There is a little fresh rust on the polished/etched surface, but on the whole the sample is very fresh. Minor amount of (Lochreib.) inclusions - apparently most were removed with olivine. Kam about 1.2 mm, unoriented. Swathing kam 1-2 mm across, unoriented. Dark plessite with no banding, but one big (1.2 mm) band. \"merowid\""
+            },
+            {
+                title: "Apizaco Jan 2015",
+                content: "End piece minus ~5g piece removed  \nfrom straight edge on \"north\". Mars today |26.5  \nSection not completely flat (we didn't remove  \nall the grooves from the saw.  \nBandwidth is 1.05 ±0.15 mm\n\nNumerous dark plenile pelts, (0.3-1) x (1 x 2) mm  \nNo FeS recognized. Some small bright inclusions (cept 3 x 0.6 mm)  \nMay be schreibersite. (Alan agrees that they are). NO.2 mm wide.  \nThere is a crack (shown in mirror image on the sketch) filled  \nwith iron oxide.  \nThe meteorite rests raggedly in the cabinet.\n\nrust  \nfille's  \nCrack  \nCursor  \nengage"
+            },
+            {
+                title: "Apoala - 2nd card.",
+                content: "6 Jun 1966. Sample received from CNHM, Cal No. Me 1008, Wt 18.0g. Sample is flat slab ~ 1.5cm x 3cm x 1.5cm with one 0.5 x 3cm surface in very good condition from weathering. Weathering does not appear to have penetrated inward more than .01mm, however.\n\nSeveral large schreib inclusions, which are extended to form cracks. Evidence of oxidation along these cracks & inclusions, inward ~ 0.1 mm. Widmannstätten pattern a bit indistinct, probably as a result of light heat treatment (or a manifestation of weathering? - I doubt it). Kamacite bands are irregular, and vary in width from 0.3 - 0.7mm. Resembles group #6 meteorites except for slightly washed out Widmannstätten pattern.\n\n29 Jul 1966 Perry (1944) plate 47, fig 1, p.167 gives a very nice X1.2 photo of Apoala, showing a troilite inclusion and two small Reichenbach lamellae."
+            },
+            {
+                title: "Aprala",
+                content: "18.10.66, USNM, Beautiful specimen, one big 2 cm diameter troilite nodule, many long thick schreibersite inclusions.  \nBands vary greatly in width from ~0.2 to ~0.8 mm. One or 2 schreibersite inclusions have different orientation than others.\n\n13. Dec. 65,  \nSmall sample (60g) from Leonard Coll. Kama band width appears to be about 1.3 mm, but the object is 0 m, not 0f. There are numerous small unidentified objects. Hor <= Apoala -pseudo"
+            },
+            {
+                title: "# Apoala-pseudo",
+                content: "Sample in Leonard collection labelled Apoala has a very indistinct Om structure, quite different from USNM and CNHM samples - see Apoala card.\n\n13, Dec. 65. Small sample (~ 50g) from Leonard Coll. Kam band width appears to be about 1.3 mm, thus the object is Om, not Of. There are numerous small rust-filled cracks. The Widmannstätten structure is very indistinct, and it appears that the sample has been reheated.\n\nWhile in Washington, I noted that Misteca, which is from the same general region of Mexico, is very similar to our sample. This would seem to be a possibility, that Mininges on a forage down south, thought that what he sought was Apoala, when it was really Misteca.\n\n5 Sep 66. Sample observed again. Kam is polycrystalline. Kam band widths are 0.7-1.1mm, thus Om-Of. Numerous banded plessite areas are to be seen ~ 10-15% of section."
+            },
+            {
+                title: "Aprelsky",
+                content: "#737  ⅢB-An ?  \n10.02 Ni\n\nOctahedrite b/w say 0.7mm.  \n(though larger ~1mm, bands visible)\n\nshocked hatched Kamacite\n\nNi ~ 9½% (of Bear Creek)  \nⅢB  \ncorrosion very little\n\ncm  \nno large sch visible\n\nblack plessite  \nlines of schreibersite inside  \nof γ boundary"
+            },
+            {
+                title: "810 Arabella",
+                content: "TTW 23XII 09 Piece supplied is irregular trapezoid. It seems to be reasonably fresh, though the surface has a thin oxide layer. On the sawed face I see some grain boundaries indicating kamacite lamellae. Thickness v 0.5-0.7, thus it seems to be Om, as reported in the literature. There are some five inclusions clustered together; I guess these are schreibersite. Total mass as received is 16g. From J. Zipfel, Senckenberg Mus."
+            },
+            {
+                title: "Argonia IN 911",
+                content: "0.23g from Asu spec 458.2  \nPallasite  \nuse entire piece - INAA May 26, 1977\n\nRounded silicates  \nlarge amount of taenite, cloudy lacnite veins observed  \nPiece not large enough to determine bit of kamacite.  \nA few .2mm schreibersite grains.  \nPlessite - very fine\n\nSample #2 from Asu spec 458.2 .22g  \n2nd INAA Feb 10, 1978"
+            },
+            {
+                title: "Arlington (Minnesota, USA)",
+                content: "Pol'd+  \n16 IV 68. Small, 2.4g sample from AMNH. Etched 30 sec nital.  \nCurious structure. Sample consists almost entirely of kamacite with variable band widths from ~0.4 to ~0.7 mm. Kamacite bands are parallel without cross bands for more than 1 cm, suggesting a plessite field. If this is so, then the smallest bands should not be counted, and the band width can be defined as 0.5-0.7 (They give, 0.9) mm. One plessite with bands <0.1 mm occurs in one small area, otherwise the \"large banded plessite\" is the only type seen. At 15x + 45x I see no inclusions whatsoever. Oxidation is very light and confined to end of small specimen. I saw main mass at USNM, and it looks very fresh, like a recent fall"
+            },
+            {
+                title: "Arlington II LLM #03 / K 117",
+                content: "5/14 + 5/15 Aug '77\n\n1 inch thick section\n\nNew error from Minnesota. Thought to be  \nnew sample of THE Arlington but is a TI-HAB.  \nMedium octahedral, band width 1.0 ± 0.1 mm.  \nMelonite has been recrystallized to a minor degree.  \nThere are \"domain\" boundary lines in the kamacite and  \nmany plessite fields seem to be recrystallized. Schreibersite  \nis rare. No troilite seen in the section.  \nWeathering has filled cracks with oxide. There are some  \nsquiggly \"flowers\" that I suspect could indicate minor impact melts."
+            },
+            {
+                title: "Arltunga (Central Australia, Australia)",
+                content: "23 IX 70. 78.0 g slab from Brit Mus, permission to remove 2.0 g. Sample is same as that studied by Axon. The structure is very structureless plessite. There are what appear to be kamacite bands, very rectilinear, < 0.01 mm wide. They are oriented primarily as shown below, with ⟂ to the long direction of the slab, with many fewer at ± 60-70°. There are few inclusions, typically ≈ 0.02 x 0.1, unidentified. The Meteorite is fresh and relatively unweathered. A short look revealed no zone of heating near the crust, however."
+            },
+            {
+                title: "Aroos (Azer.., USSR)",
+                content: "13 Nov 66 1.2 x 1.3 cm remnant of sample obtained from Max-Planck Institut, Mainz. Two large faces + small face between polished and etched 60 sec in nital. Very little structure. Taenite bands have disappeared in most cases, but some taenite and even plessite remains. One band which is definitely oriented is 2.7 mm wide before it disappears, another seems to be 2.2 mm. Surface has numerous black spots. Under 90x I can't tell if they are taenite, carbon, or schreibersite. No obvious cohenite is visible, but some schreibersite is present along grain boundaries. Surface has many Neumann lines. No oxidation (observed fall)."
+            },
+            {
+                title: "Arvorezinha",
+                content: "This iron is from Zucoloto. She wondered if it could be Campo and the only evidence that it is not is a high Au content.\n\nPolishing (rough) and etching shows much evidence of oxidation, some L-shaped inclusions (bar thicknesses ~ 0.1mm, bar lengths 0.2 to 3 mm).  \nI am not sure that these are. They seem to be schreibisite.*\n\nThe sample is badly corroded and the only evidence regarding boundaries is that areas outlined by corrosion have dimensions of ~ 2 mm. But the ca. 1 cm^2 sample shows no kamacite boundaries. I speculate that it may have suffered reheating.\n\n*Perhaps these \"inclusions\" are taenite. One triangular area could be plessite. They occupy ~ 1-2% of the surface."
+            }
+        ];
+
+        document.addEventListener('DOMContentLoaded', function() {
+            const container = document.getElementById('notebookContainer');
+            const backToTopBtn = document.getElementById('backToTop');
+            
+            // Create the notebook contents
+            for (let i = 0; i < pageData.length; i++) {
+                const page = pageData[i];
+                const pageNumber = i + 1;
+                
+                // Create page section
+                const section = document.createElement('section');
+                section.className = 'page-section';
+                section.id = `page-${pageNumber}`;
+                
+                // Create image container
+                const imageContainer = document.createElement('div');
+                imageContainer.className = 'image-container';
+                
+                const imageWrapper = document.createElement('div');
+                imageWrapper.className = 'image-wrapper';
+                
+                const img = document.createElement('img');
+                // Format the page number with padding zeros
+                const paddedNumber = pageNumber.toString().padStart(4, '0');
+                img.src = `An-Ar_page-${paddedNumber}.jpg`;
+                img.alt = `Page ${pageNumber}: ${page.title}`;
+                img.loading = 'lazy'; // Lazy load images for better performance
+                
+                imageWrapper.appendChild(img);
+                imageContainer.appendChild(imageWrapper);
+                
+                // Create text container
+                const textContainer = document.createElement('div');
+                textContainer.className = 'text-container';
+                
+                const pageNum = document.createElement('div');
+                pageNum.className = 'page-number';
+                pageNum.textContent = `Page ${pageNumber} of 20`;
+                
+                const pageTitle = document.createElement('h2');
+                pageTitle.className = 'page-title';
+                pageTitle.textContent = page.title;
+                
+                const textContent = document.createElement('div');
+                textContent.className = 'text-content';
+                textContent.textContent = page.content;
+                
+                textContainer.appendChild(pageNum);
+                textContainer.appendChild(pageTitle);
+                textContainer.appendChild(textContent);
+                
+                // Add them to the section
+                section.appendChild(imageContainer);
+                section.appendChild(textContainer);
+                
+                // Add the section to the container
+                container.appendChild(section);
+            }
+            
+            // Search functionality
+            const searchInput = document.getElementById('searchInput');
+            searchInput.addEventListener('keyup', function(event) {
+                if (event.key === 'Enter') {
+                    const searchTerm = this.value.toLowerCase().trim();
+                    
+                    if (searchTerm === '') {
+                        return;
+                    }
+                    
+                    // Remove previous highlights
+                    document.querySelectorAll('mark').forEach(mark => {
+                        const parent = mark.parentNode;
+                        parent.replaceChild(document.createTextNode(mark.textContent), mark);
+                        parent.normalize();
+                    });
+                    
+                    // Find matches and highlight them
+                    let foundMatch = false;
+                    let firstMatchElement = null;
+                    
+                    pageData.forEach((page, index) => {
+                        const pageNumber = index + 1;
+                        const textContent = document.querySelector(`#page-${pageNumber} .text-content`);
+                        const content = page.content.toLowerCase();
+                        
+                        if (content.includes(searchTerm)) {
+                            foundMatch = true;
+                            
+                            // Highlight matches
+                            const text = textContent.textContent;
+                            const regex = new RegExp(searchTerm, 'gi');
+                            const highlightedText = text.replace(regex, match => `<mark>${match}</mark>`);
+                            textContent.innerHTML = highlightedText;
+                            
+                            // Store the first match element for scrolling
+                            if (!firstMatchElement) {
+                                firstMatchElement = document.querySelector(`#page-${pageNumber} mark`);
+                            }
+                        }
+                    });
+                    
+                    if (foundMatch && firstMatchElement) {
+                        // Scroll to the first match
+                        firstMatchElement.scrollIntoView({
+                            behavior: 'smooth',
+                            block: 'center'
+                        });
+                    } else {
+                        alert('No matches found for: ' + searchTerm);
+                    }
+                }
+            });
+            
+            // Back to top button
+            window.addEventListener('scroll', function() {
+                if (window.pageYOffset > 300) {
+                    backToTopBtn.style.display = 'block';
+                } else {
+                    backToTopBtn.style.display = 'none';
+                }
+            });
+            
+            backToTopBtn.addEventListener('click', function() {
+                window.scrollTo({
+                    top: 0,
+                    behavior: 'smooth'
+                });
+            });
+        });
+    </script>
+</body>
+</html>
