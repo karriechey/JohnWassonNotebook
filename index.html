@@ -236,13 +236,84 @@
 
     <script>
         // Configuration object - change these values for each notebook
-        const notebookConfig = {
-            title: "John Wasson Notebook",
-            imagePrefix: "An-Ar_page-",
-            imageSuffix: ".jpg",
-            totalPages: 20,
-            pagesPerSection: "An-Ar" // Prefix for pages in this section
+const notebookConfig = {
+    title: "John Wasson Notebook",
+    // Update image path to use GitHub Pages URL format
+    imageBasePath: "https://raw.githubusercontent.com/karriechey/JohnWassonNotebook/main/images/",
+    imagePrefix: "An-Ar_page-",
+    imageSuffix: ".jpg",
+    totalPages: 20,
+    pagesPerSection: "An-Ar" // Prefix for pages in this section
+};
+
+// Create notebook pages
+function createNotebookPages() {
+    const container = document.getElementById('notebookContainer');
+    
+    for (let i = 0; i < pageData.length; i++) {
+        const page = pageData[i];
+        const pageNumber = i + 1;
+        
+        // Create page section
+        const section = document.createElement('section');
+        section.className = 'page-section';
+        section.id = `page-${pageNumber}`;
+        
+        // Create image container
+        const imageContainer = document.createElement('div');
+        imageContainer.className = 'image-container';
+        
+        const imageWrapper = document.createElement('div');
+        imageWrapper.className = 'image-wrapper';
+        
+        const img = document.createElement('img');
+        // Format the page number with padding zeros
+        const paddedNumber = pageNumber.toString().padStart(4, '0');
+        
+        // Use the full GitHub raw content URL for images
+        img.src = `${notebookConfig.imageBasePath}${notebookConfig.imagePrefix}${paddedNumber}${notebookConfig.imageSuffix}`;
+        img.alt = `Page ${pageNumber}: ${page.title}`;
+        img.loading = 'lazy';
+        
+        // Add error handler for images
+        img.onerror = function() {
+            this.src = 'placeholder-image.jpg';
+            this.alt = 'Image not available';
+            this.onerror = null; // Prevent infinite loop if placeholder is also missing
+            console.log(`Failed to load image: ${this.src}`);
         };
+        
+        imageWrapper.appendChild(img);
+        imageContainer.appendChild(imageWrapper);
+        
+        // Create text container
+        const textContainer = document.createElement('div');
+        textContainer.className = 'text-container';
+        
+        const pageNum = document.createElement('div');
+        pageNum.className = 'page-number';
+        pageNum.textContent = `Page ${pageNumber} of ${pageData.length}`;
+        
+        const pageTitle = document.createElement('h2');
+        pageTitle.className = 'page-title';
+        pageTitle.textContent = page.title;
+        
+        const textContent = document.createElement('div');
+        textContent.className = 'text-content';
+        textContent.textContent = page.content;
+        
+        textContainer.appendChild(pageNum);
+        textContainer.appendChild(pageTitle);
+        textContainer.appendChild(textContent);
+        
+        // Add them to the section
+        section.appendChild(imageContainer);
+        section.appendChild(textContainer);
+        
+        // Add the section to the container
+        container.appendChild(section);
+    }
+}
 
         // Page data - this would be loaded from external JSON in a production environment
         let pageData = [];
