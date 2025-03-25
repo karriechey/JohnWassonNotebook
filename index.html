@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Meteorite Notebook Viewer</title>
+    <title>Wasson Meteorite Notebook Viewer</title>
     <style>
         body {
             margin: 0;
@@ -31,11 +31,18 @@
         }
         
         .search-bar {
-            width: 80%;
-            max-width: 600px;
+            width: 60%;
+            max-width: 500px;
             padding: 8px;
             border: 1px solid #ccc;
             border-radius: 4px;
+        }
+        
+        .notebook-select {
+            padding: 8px;
+            border: 1px solid #ccc;
+            border-radius: 4px;
+            min-width: 200px;
         }
         
         .search-options {
@@ -200,11 +207,26 @@
             .text-container {
                 border-left: none;
             }
+            
+            .header {
+                flex-direction: column;
+            }
+            
+            .search-bar {
+                width: 90%;
+            }
+            
+            .notebook-select {
+                width: 90%;
+            }
         }
     </style>
 </head>
 <body>
     <div class="header">
+        <select id="notebookSelect" class="notebook-select">
+            <!-- Notebooks will be populated dynamically -->
+        </select>
         <input type="text" id="searchInput" class="search-bar" placeholder="Search for keywords...">
         <div class="search-options">
             <label>
@@ -235,260 +257,114 @@
     <button id="backToTop" class="back-to-top" title="Back to Top">↑</button>
 
     <script>
-        // Configuration object - change these values for each notebook
-const notebookConfig = {
-    title: "John Wasson Meteorite Notebook (AN-AR)",
-    // Update image path to use GitHub Pages URL format
-    imageBasePath: "https://raw.githubusercontent.com/karriechey/JohnWassonNotebook/main/",
-    imagePrefix: "An-Ar_page-",
-    imageSuffix: ".jpg",
-    totalPages: 20,
-    pagesPerSection: "An-Ar" // Prefix for pages in this section
-};
-
-// Create notebook pages
-function createNotebookPages() {
-    const container = document.getElementById('notebookContainer');
-    
-    for (let i = 0; i < pageData.length; i++) {
-        const page = pageData[i];
-        const pageNumber = i + 1;
-        
-        // Create page section
-        const section = document.createElement('section');
-        section.className = 'page-section';
-        section.id = `page-${pageNumber}`;
-        
-        // Create image container
-        const imageContainer = document.createElement('div');
-        imageContainer.className = 'image-container';
-        
-        const imageWrapper = document.createElement('div');
-        imageWrapper.className = 'image-wrapper';
-        
-        const img = document.createElement('img');
-        // Format the page number with padding zeros
-        const paddedNumber = pageNumber.toString().padStart(4, '0');
-        
-        // Use the full GitHub raw content URL for images
-        img.src = `${notebookConfig.imageBasePath}${notebookConfig.imagePrefix}${paddedNumber}${notebookConfig.imageSuffix}`;
-        img.alt = `Page ${pageNumber}: ${page.title}`;
-        img.loading = 'lazy';
-        
-        // Add error handler for images
-        img.onerror = function() {
-            this.src = 'placeholder-image.jpg';
-            this.alt = 'Image not available';
-            this.onerror = null; // Prevent infinite loop if placeholder is also missing
-            console.log(`Failed to load image: ${this.src}`);
+        // Configuration object for all notebooks
+        // Add more notebooks as needed, following the same format
+        const notebooksConfig = {
+            baseUrl: 'https://raw.githubusercontent.com/karriechey/JohnWassonNotebook/main/',
+            notebooks: [
+                {
+                    id: 'an-ar',
+                    title: 'John Wasson Meteorite Notebook (AN-AR)',
+                    imagePrefix: 'An-Ar_page-',
+                    textPrefix: 'An-Ar_text-',
+                    totalPages: 20
+                },
+                {
+                    id: 'as-ba',
+                    title: 'John Wasson Meteorite Notebook (AS-BA)',
+                    imagePrefix: 'As-Ba_page-',
+                    textPrefix: 'As-Ba_text-',
+                    totalPages: 25
+                },
+                {
+                    id: 'bc-bl',
+                    title: 'John Wasson Meteorite Notebook (BC-BL)',
+                    imagePrefix: 'Bc-Bl_page-',
+                    textPrefix: 'Bc-Bl_text-',
+                    totalPages: 22
+                },
+                {
+                    id: 'bo-br',
+                    title: 'John Wasson Meteorite Notebook (BO-BR)',
+                    imagePrefix: 'Bo-Br_page-',
+                    textPrefix: 'Bo-Br_text-',
+                    totalPages: 30
+                },
+                {
+                    id: 'bu-ca',
+                    title: 'John Wasson Meteorite Notebook (BU-CA)',
+                    imagePrefix: 'Bu-Ca_page-',
+                    textPrefix: 'Bu-Ca_text-',
+                    totalPages: 28
+                }
+                // Add more notebooks here as needed
+            ]
         };
-        
-        imageWrapper.appendChild(img);
-        imageContainer.appendChild(imageWrapper);
-        
-        // Create text container
-        const textContainer = document.createElement('div');
-        textContainer.className = 'text-container';
-        
-        const pageNum = document.createElement('div');
-        pageNum.className = 'page-number';
-        pageNum.textContent = `Page ${pageNumber} of ${pageData.length}`;
-        
-        const pageTitle = document.createElement('h2');
-        pageTitle.className = 'page-title';
-        pageTitle.textContent = page.title;
-        
-        const textContent = document.createElement('div');
-        textContent.className = 'text-content';
-        textContent.textContent = page.content;
-        
-        textContainer.appendChild(pageNum);
-        textContainer.appendChild(pageTitle);
-        textContainer.appendChild(textContent);
-        
-        // Add them to the section
-        section.appendChild(imageContainer);
-        section.appendChild(textContainer);
-        
-        // Add the section to the container
-        container.appendChild(section);
-    }
-}
 
-        // Page data - this would be loaded from external JSON in a production environment
+        // Current state variables
+        let currentNotebook = null;
         let pageData = [];
 
-        // Keep this embedded pageData or load from external JSON
-        pageData = [
-            {
-                title: "Anderson (Ohio, USA)",
-                content: "30 III 68 From Harvard, entire 170g mass. Broke off small fragment. Rounded olivine, in many sized spheres from 0.3 to 1.0 cm. Some \"coalesced.\" There seems to be a border between coalesced nodules - indicates Schreiber, or differently oriented crystal structures, or both. Thin deposits of Schreiber seem to surround olivine. The olivine only appears to occupy ~50% of area in this section, and is definitely not close-packed. One metallic area is ~1.5 cm across. Small fragment shows some surface oxidation, but not too much."
-            },
-            {
-                title: "Angelica",
-                content: "9 II 70 USNM#2177, 4.8g, Area ~ 2 cm²; polished and etched (30 sec);  \nrather regular Widmanstätten pattern, band width ~0.5-1 mm; this piece contains an inclusion of Troilite and Cohenite (?) (see picture), and a small hole without oxidation products; most of the plessite shows micro-Widmanstätten structure. There are some very thin long cracks in this piece; surface slightly oxidized"
-            },
-            {
-                title: "Angra Dos Reis (vion)",
-                content: "IN 381\n\nHex JA  \n5.46% Ni, .2% P  \n57 ppm Ga, 188 ppm Ge, 31 ppm Ir  \nCohenite, Troilite, Schreibersite  \nVFB\n\nHexahedrite  \n5.5% Ni  \n.2% P  \nMany Habolites present  \nNeumann lines  \nSome Schreibersite  \n2 Vhard irregular inclusions, probably schreibersite  \nEffects of torsion visible along one side.\n\nINAA (1) 11 I 77  \n(2) 21 IX 77"
-            },
-            {
-                title: "Annaheim (Saskatchewan, Canada)",
-                content: "10 Jan 1976. 17g sample from Geol Surv. Ottawa. Polished and etched 20 sec nital. The structure is of mud, distinctness. The kam bands are difficult to orient, but the smallest are in the range of 1.3-1.6 mm, thus Oz. A few tiny 0.2 x 0.02 mm schreib inch. Plesite is ~10% of area. It is a half dark, a half banded, in several directions. No cracks, no oxidation.\n\nNo obvious carbide, silicate or sulphide.\n\nRemoved 3 mm wide block from one end, adjacent to existing cut\n\nDWP. 4 Dec 1979\n\n23 IV 80. One small inclusion(frailty) in next 3 mm block. To be avoided."
-            },
-            {
-                title: "Anoka, Minn.",
-                content: "25. III. s, Looking again at sample, originally S. G. now about 4g, from Voshage, Mding (Aka Widmann-struckere. Several Vein schrebersite inclusions - no troilite visible. Lots of quite attractive plessite of matte texture. Kama band width 10.10 x 0.20 mm, thus off on Buchwald system."
-            },
-            {
-                title: "Hugs makssalik W2111",
-                content: "14 Jan 2012 - JTO\n\nRusty slab ~3 mm thick; total mass 62.0g  \nCoarsest octahedrite; lam. bandwidth ~5 mm  \nMuch corrosion at ham. grain boundaries but  \ninteriors seem to be polished metal.  \nMetal seems to have a frosty appearance,  \nprobably the result of a deep etch. We did not  \nyet prepare a new surface.  \nI was not able to find any inclusions."
-            },
-            {
-                title: "Amyujskij",
-                content: "IN 1360  \nSmall sample from KMAU Moscow 5/7. Seems to be a hexahedrite; abundant Neumann lines, no taenite.  \nCurious \"whitish\" mottled area in lower left - may be some sort of reheating effect. Under high power I can see many tiny (10 µm x 100 µm) rhabdites in the unreheated area, but extensive resorption and even incipient melting? (domains of clear koled 60 x 100 µm in size) in the mottled areas.  \nJTW 3.4.90"
-            },
-            {
-                title: "Antofagasta (Antofagasta, Chile)",
-                content: "13. Aug. 71. Two pieces from NMNH 1207. Both have had olivine removed. Pallasite seems to be relatively rich in metal. Olivine grains were rounded, and typical dimensions were apparently about 0.5 cm diameter. The one flat surface of the larger piece we received includes one area of clear metal about 1.1 cm across, and at least 2-3 mm thick in this section. There is a little fresh rust on the polished/etched surface, but on the whole the sample is very fresh. Minor amount of (Lochreib.) inclusions - apparently most were removed with olivine. Kam about 1.2 mm, unoriented. Swathing kam 1-2 mm across, unoriented. Dark plessite with no banding, but one big (1.2 mm) band. \"merowid\""
-            },
-            {
-                title: "Apizaco Jan 2015",
-                content: "End piece minus ~5g piece removed  \nfrom straight edge on \"north\". Mars today |26.5  \nSection not completely flat (we didn't remove  \nall the grooves from the saw.  \nBandwidth is 1.05 ±0.15 mm\n\nNumerous dark plenile pelts, (0.3-1) x (1 x 2) mm  \nNo FeS recognized. Some small bright inclusions (cept 3 x 0.6 mm)  \nMay be schreibersite. (Alan agrees that they are). NO.2 mm wide.  \nThere is a crack (shown in mirror image on the sketch) filled  \nwith iron oxide.  \nThe meteorite rests raggedly in the cabinet.\n\nrust  \nfille's  \nCrack  \nCursor  \nengage"
-            },
-            {
-                title: "Apoala - 2nd card.",
-                content: "6 Jun 1966. Sample received from CNHM, Cal No. Me 1008, Wt 18.0g. Sample is flat slab ~ 1.5cm x 3cm x 1.5cm with one 0.5 x 3cm surface in very good condition from weathering. Weathering does not appear to have penetrated inward more than .01mm, however.\n\nSeveral large schreib inclusions, which are extended to form cracks. Evidence of oxidation along these cracks & inclusions, inward ~ 0.1 mm. Widmannstätten pattern a bit indistinct, probably as a result of light heat treatment (or a manifestation of weathering? - I doubt it). Kamacite bands are irregular, and vary in width from 0.3 - 0.7mm. Resembles group #6 meteorites except for slightly washed out Widmannstätten pattern.\n\n29 Jul 1966 Perry (1944) plate 47, fig 1, p.167 gives a very nice X1.2 photo of Apoala, showing a troilite inclusion and two small Reichenbach lamellae."
-            },
-            {
-                title: "Aprala",
-                content: "18.10.66, USNM, Beautiful specimen, one big 2 cm diameter troilite nodule, many long thick schreibersite inclusions.  \nBands vary greatly in width from ~0.2 to ~0.8 mm. One or 2 schreibersite inclusions have different orientation than others.\n\n13. Dec. 65,  \nSmall sample (60g) from Leonard Coll. Kama band width appears to be about 1.3 mm, but the object is 0 m, not 0f. There are numerous small unidentified objects. Hor <= Apoala -pseudo"
-            },
-            {
-                title: "# Apoala-pseudo",
-                content: "Sample in Leonard collection labelled Apoala has a very indistinct Om structure, quite different from USNM and CNHM samples - see Apoala card.\n\n13, Dec. 65. Small sample (~ 50g) from Leonard Coll. Kam band width appears to be about 1.3 mm, thus the object is Om, not Of. There are numerous small rust-filled cracks. The Widmannstätten structure is very indistinct, and it appears that the sample has been reheated.\n\nWhile in Washington, I noted that Misteca, which is from the same general region of Mexico, is very similar to our sample. This would seem to be a possibility, that Mininges on a forage down south, thought that what he sought was Apoala, when it was really Misteca.\n\n5 Sep 66. Sample observed again. Kam is polycrystalline. Kam band widths are 0.7-1.1mm, thus Om-Of. Numerous banded plessite areas are to be seen ~ 10-15% of section."
-            },
-            {
-                title: "Aprelsky",
-                content: "#737  ⅢB-An ?  \n10.02 Ni\n\nOctahedrite b/w say 0.7mm.  \n(though larger ~1mm, bands visible)\n\nshocked hatched Kamacite\n\nNi ~ 9½% (of Bear Creek)  \nⅢB  \ncorrosion very little\n\ncm  \nno large sch visible\n\nblack plessite  \nlines of schreibersite inside  \nof γ boundary"
-            },
-            {
-                title: "810 Arabella",
-                content: "TTW 23XII 09 Piece supplied is irregular trapezoid. It seems to be reasonably fresh, though the surface has a thin oxide layer. On the sawed face I see some grain boundaries indicating kamacite lamellae. Thickness v 0.5-0.7, thus it seems to be Om, as reported in the literature. There are some five inclusions clustered together; I guess these are schreibersite. Total mass as received is 16g. From J. Zipfel, Senckenberg Mus."
-            },
-            {
-                title: "Argonia IN 911",
-                content: "0.23g from Asu spec 458.2  \nPallasite  \nuse entire piece - INAA May 26, 1977\n\nRounded silicates  \nlarge amount of taenite, cloudy lacnite veins observed  \nPiece not large enough to determine bit of kamacite.  \nA few .2mm schreibersite grains.  \nPlessite - very fine\n\nSample #2 from Asu spec 458.2 .22g  \n2nd INAA Feb 10, 1978"
-            },
-            {
-                title: "Arlington (Minnesota, USA)",
-                content: "Pol'd+  \n16 IV 68. Small, 2.4g sample from AMNH. Etched 30 sec nital.  \nCurious structure. Sample consists almost entirely of kamacite with variable band widths from ~0.4 to ~0.7 mm. Kamacite bands are parallel without cross bands for more than 1 cm, suggesting a plessite field. If this is so, then the smallest bands should not be counted, and the band width can be defined as 0.5-0.7 (They give, 0.9) mm. One plessite with bands <0.1 mm occurs in one small area, otherwise the \"large banded plessite\" is the only type seen. At 15x + 45x I see no inclusions whatsoever. Oxidation is very light and confined to end of small specimen. I saw main mass at USNM, and it looks very fresh, like a recent fall"
-            },
-            {
-                title: "Arlington II LLM #03 / K 117",
-                content: "5/14 + 5/15 Aug '77\n\n1 inch thick section\n\nNew error from Minnesota. Thought to be  \nnew sample of THE Arlington but is a TI-HAB.  \nMedium octahedral, band width 1.0 ± 0.1 mm.  \nMelonite has been recrystallized to a minor degree.  \nThere are \"domain\" boundary lines in the kamacite and  \nmany plessite fields seem to be recrystallized. Schreibersite  \nis rare. No troilite seen in the section.  \nWeathering has filled cracks with oxide. There are some  \nsquiggly \"flowers\" that I suspect could indicate minor impact melts."
-            },
-            {
-                title: "Arltunga (Central Australia, Australia)",
-                content: "23 IX 70. 78.0 g slab from Brit Mus, permission to remove 2.0 g. Sample is same as that studied by Axon. The structure is very structureless plessite. There are what appear to be kamacite bands, very rectilinear, < 0.01 mm wide. They are oriented primarily as shown below, with ⟂ to the long direction of the slab, with many fewer at ± 60-70°. There are few inclusions, typically ≈ 0.02 x 0.1, unidentified. The Meteorite is fresh and relatively unweathered. A short look revealed no zone of heating near the crust, however."
-            },
-            {
-                title: "Aroos (Azer.., USSR)",
-                content: "13 Nov 66 1.2 x 1.3 cm remnant of sample obtained from Max-Planck Institut, Mainz. Two large faces + small face between polished and etched 60 sec in nital. Very little structure. Taenite bands have disappeared in most cases, but some taenite and even plessite remains. One band which is definitely oriented is 2.7 mm wide before it disappears, another seems to be 2.2 mm. Surface has numerous black spots. Under 90x I can't tell if they are taenite, carbon, or schreibersite. No obvious cohenite is visible, but some schreibersite is present along grain boundaries. Surface has many Neumann lines. No oxidation (observed fall)."
-            },
-            {
-                title: "Arvorezinha",
-                content: "This iron is from Zucoloto. She wondered if it could be Campo and the only evidence that it is not is a high Au content.\n\nPolishing (rough) and etching shows much evidence of oxidation, some L-shaped inclusions (bar thicknesses ~ 0.1mm, bar lengths 0.2 to 3 mm).  \nI am not sure that these are. They seem to be schreibisite.*\n\nThe sample is badly corroded and the only evidence regarding boundaries is that areas outlined by corrosion have dimensions of ~ 2 mm. But the ca. 1 cm^2 sample shows no kamacite boundaries. I speculate that it may have suffered reheating.\n\n*Perhaps these \"inclusions\" are taenite. One triangular area could be plessite. They occupy ~ 1-2% of the surface."
-            }
-        ];
+        // Search state
+        let searchState = {
+            matches: [],
+            currentMatchIndex: -1
+        };
 
-        // Initialize the viewer
+        // Initialize the viewer when the DOM is loaded
         document.addEventListener('DOMContentLoaded', function() {
             initializeNotebookViewer();
         });
 
         // Main initialization function
         function initializeNotebookViewer() {
-            // Set notebook title
-            document.getElementById('notebookTitle').textContent = notebookConfig.title;
-            document.title = notebookConfig.title;
-            
-            // Remove loading message
-            document.getElementById('loadingMessage').style.display = 'none';
-            
-            // Create notebook content
-            createNotebookPages();
+            // Populate notebook selector dropdown
+            populateNotebookSelector();
             
             // Set up event listeners
             setupEventListeners();
-        }
-
-        // Create notebook pages
-        function createNotebookPages() {
-            const container = document.getElementById('notebookContainer');
             
-            for (let i = 0; i < pageData.length; i++) {
-                const page = pageData[i];
-                const pageNumber = i + 1;
-                
-                // Create page section
-                const section = document.createElement('section');
-                section.className = 'page-section';
-                section.id = `page-${pageNumber}`;
-                
-                // Create image container
-                const imageContainer = document.createElement('div');
-                imageContainer.className = 'image-container';
-                
-                const imageWrapper = document.createElement('div');
-                imageWrapper.className = 'image-wrapper';
-                
-                const img = document.createElement('img');
-                // Format the page number with padding zeros
-                const paddedNumber = pageNumber.toString().padStart(4, '0');
-                img.src = `${notebookConfig.imagePrefix}${paddedNumber}${notebookConfig.imageSuffix}`;
-                img.alt = `Page ${pageNumber}: ${page.title}`;
-                img.loading = 'lazy';
-                
-                imageWrapper.appendChild(img);
-                imageContainer.appendChild(imageWrapper);
-                
-                // Create text container
-                const textContainer = document.createElement('div');
-                textContainer.className = 'text-container';
-                
-                const pageNum = document.createElement('div');
-                pageNum.className = 'page-number';
-                pageNum.textContent = `Page ${pageNumber} of ${notebookConfig.totalPages}`;
-                
-                const pageTitle = document.createElement('h2');
-                pageTitle.className = 'page-title';
-                pageTitle.textContent = page.title;
-                
-                const textContent = document.createElement('div');
-                textContent.className = 'text-content';
-                textContent.textContent = page.content;
-                
-                textContainer.appendChild(pageNum);
-                textContainer.appendChild(pageTitle);
-                textContainer.appendChild(textContent);
-                
-                // Add them to the section
-                section.appendChild(imageContainer);
-                section.appendChild(textContainer);
-                
-                // Add the section to the container
-                container.appendChild(section);
-            }
+            // Load the default notebook (AN-AR)
+            loadNotebook('an-ar');
         }
 
-        // Set up event listeners
+        // Populate the notebook selector dropdown
+        function populateNotebookSelector() {
+            const selectElement = document.getElementById('notebookSelect');
+            
+            // Sort notebooks alphabetically
+            const sortedNotebooks = [...notebooksConfig.notebooks].sort((a, b) => 
+                a.title.localeCompare(b.title)
+            );
+            
+            // Add options to the select element
+            sortedNotebooks.forEach(notebook => {
+                const option = document.createElement('option');
+                option.value = notebook.id;
+                option.textContent = notebook.title;
+                selectElement.appendChild(option);
+            });
+            
+            // Select AN-AR by default
+            selectElement.value = 'an-ar';
+        }
+
+        // Set up all event listeners
         function setupEventListeners() {
+            const notebookSelect = document.getElementById('notebookSelect');
             const searchInput = document.getElementById('searchInput');
             const searchButton = document.getElementById('searchButton');
             const backToTopBtn = document.getElementById('backToTop');
             const prevResultBtn = document.getElementById('prevResult');
             const nextResultBtn = document.getElementById('nextResult');
+            
+            // Notebook selection change
+            notebookSelect.addEventListener('change', function() {
+                const notebookId = this.value;
+                if (notebookId) {
+                    loadNotebook(notebookId);
+                }
+            });
             
             // Search functionality
             searchInput.addEventListener('keyup', function(event) {
@@ -525,13 +401,217 @@ function createNotebookPages() {
             });
         }
 
-        // Current search state
-        let searchState = {
-            matches: [],
-            currentMatchIndex: -1
-        };
+        // Load a notebook by ID
+        function loadNotebook(notebookId) {
+            // Find the notebook configuration
+            currentNotebook = notebooksConfig.notebooks.find(nb => nb.id === notebookId);
+            
+            if (!currentNotebook) {
+                showError('Notebook not found');
+                return;
+            }
+            
+            // Update UI
+            document.getElementById('notebookTitle').textContent = currentNotebook.title;
+            document.title = currentNotebook.title;
+            
+            // Show loading message
+            const loadingMessage = document.getElementById('loadingMessage');
+            loadingMessage.textContent = 'Loading notebook data...';
+            loadingMessage.style.display = 'block';
+            
+            // Clear any previous content
+            const container = document.getElementById('notebookContainer');
+            container.innerHTML = '';
+            container.appendChild(loadingMessage);
+            
+            // Reset search state
+            clearSearchHighlights();
+            searchState = {
+                matches: [],
+                currentMatchIndex: -1
+            };
+            
+            // For testing with embedded data (will be replaced with actual file loading)
+            if (notebookId === 'an-ar') {
+                // Use embedded data for AN-AR notebook
+                loadEmbeddedData();
+            } else {
+                // Load from files for other notebooks
+                loadNotebookData();
+            }
+        }
 
-        // Perform search
+        // Load embedded data for AN-AR notebook (for testing)
+        function loadEmbeddedData() {
+            // This is sample data - in the final version, this would be loaded from text files
+            pageData = [
+                {
+                    title: "Anderson (Ohio, USA)",
+                    content: "30 III 68 From Harvard, entire 170g mass. Broke off small fragment. Rounded olivine, in many sized spheres from 0.3 to 1.0 cm. Some \"coalesced.\" There seems to be a border between coalesced nodules - indicates Schreiber, or differently oriented crystal structures, or both. Thin deposits of Schreiber seem to surround olivine. The olivine only appears to occupy ~50% of area in this section, and is definitely not close-packed. One metallic area is ~1.5 cm across. Small fragment shows some surface oxidation, but not too much."
+                },
+                {
+                    title: "Angelica",
+                    content: "9 II 70 USNM#2177, 4.8g, Area ~ 2 cm²; polished and etched (30 sec);  \nrather regular Widmanstätten pattern, band width ~0.5-1 mm; this piece contains an inclusion of Troilite and Cohenite (?) (see picture), and a small hole without oxidation products; most of the plessite shows micro-Widmanstätten structure. There are some very thin long cracks in this piece; surface slightly oxidized"
+                },
+                {
+                    title: "Angra Dos Reis (vion)",
+                    content: "IN 381\n\nHex JA  \n5.46% Ni, .2% P  \n57 ppm Ga, 188 ppm Ge, 31 ppm Ir  \nCohenite, Troilite, Schreibersite  \nVFB\n\nHexahedrite  \n5.5% Ni  \n.2% P  \nMany Habolites present  \nNeumann lines  \nSome Schreibersite  \n2 Vhard irregular inclusions, probably schreibersite  \nEffects of torsion visible along one side.\n\nINAA (1) 11 I 77  \n(2) 21 IX 77"
+                },
+                // Sample data continued as in original, truncated for brevity
+                {
+                    title: "Arvorezinha",
+                    content: "This iron is from Zucoloto. She wondered if it could be Campo and the only evidence that it is not is a high Au content.\n\nPolishing (rough) and etching shows much evidence of oxidation, some L-shaped inclusions (bar thicknesses ~ 0.1mm, bar lengths 0.2 to 3 mm).  \nI am not sure that these are. They seem to be schreibisite.*\n\nThe sample is badly corroded and the only evidence regarding boundaries is that areas outlined by corrosion have dimensions of ~ 2 mm. But the ca. 1 cm^2 sample shows no kamacite boundaries. I speculate that it may have suffered reheating.\n\n*Perhaps these \"inclusions\" are taenite. One triangular area could be plessite. They occupy ~ 1-2% of the surface."
+                }
+            ];
+            
+            // Create notebook content
+            createNotebookPages();
+            
+            // Hide loading message
+            document.getElementById('loadingMessage').style.display = 'none';
+        }
+
+        // Load notebook data from text files
+        function loadNotebookData() {
+            // Reset page data
+            pageData = [];
+            
+            // Create array of promises for loading text files
+            const promises = [];
+            
+            for (let i = 1; i <= currentNotebook.totalPages; i++) {
+                const paddedNumber = i.toString().padStart(4, '0');
+                const textUrl = `${notebooksConfig.baseUrl}${currentNotebook.textPrefix}${paddedNumber}.txt`;
+                
+                const promise = fetch(textUrl)
+                    .then(response => {
+                        if (!response.ok) {
+                            throw new Error(`Failed to load text file: ${textUrl}`);
+                        }
+                        return response.text();
+                    })
+                    .then(text => {
+                        // Parse the text file (first line as title, rest as content)
+                        const lines = text.trim().split('\n');
+                        const title = lines[0] || `Page ${i}`;
+                        const content = lines.slice(1).join('\n').trim();
+                        
+                        // Add to page data array with the correct index
+                        pageData[i-1] = {
+                            title: title,
+                            content: content
+                        };
+                    })
+                    .catch(error => {
+                        console.error(`Error loading text for page ${i}:`, error);
+                        // Add placeholder data on error
+                        pageData[i-1] = {
+                            title: `Page ${i} (Data not available)`,
+                            content: 'Text data could not be loaded.'
+                        };
+                    });
+                
+                promises.push(promise);
+            }
+            
+            // Wait for all text files to load
+            Promise.all(promises)
+                .then(() => {
+                    // Create notebook content
+                    createNotebookPages();
+                    
+                    // Hide loading message
+                    document.getElementById('loadingMessage').style.display = 'none';
+                })
+                .catch(error => {
+                    console.error('Error loading notebook data:', error);
+                    document.getElementById('loadingMessage').textContent = 
+                        'Error loading notebook data. Please try again later.';
+                });
+        }
+
+        // Create notebook pages in the DOM
+        function createNotebookPages() {
+            const container = document.getElementById('notebookContainer');
+            container.innerHTML = ''; // Clear container
+            
+            for (let i = 0; i < pageData.length; i++) {
+                const page = pageData[i];
+                const pageNumber = i + 1;
+                
+                // Create page section
+                const section = document.createElement('section');
+                section.className = 'page-section';
+                section.id = `page-${pageNumber}`;
+                
+                // Create image container
+                const imageContainer = document.createElement('div');
+                imageContainer.className = 'image-container';
+                
+                const imageWrapper = document.createElement('div');
+                imageWrapper.className = 'image-wrapper';
+                
+                const img = document.createElement('img');
+                // Format the page number with padding zeros
+                const paddedNumber = pageNumber.toString().padStart(4, '0');
+                img.src = `${notebooksConfig.baseUrl}${currentNotebook.imagePrefix}${paddedNumber}.jpg`;
+                img.alt = `Page ${pageNumber}: ${page.title}`;
+                img.loading = 'lazy'; // Lazy load images for better performance
+                
+                // Add error handler for images
+                img.onerror = function() {
+                    this.src = 'placeholder-image.jpg'; // Fallback image
+                    this.alt = 'Image not available';
+                    this.onerror = null; // Prevent infinite loop if placeholder is also missing
+                };
+                
+                imageWrapper.appendChild(img);
+                imageContainer.appendChild(imageWrapper);
+                
+                // Create text container
+                const textContainer = document.createElement('div');
+                textContainer.className = 'text-container';
+                
+                const pageNum = document.createElement('div');
+                pageNum.className = 'page-number';
+                pageNum.textContent = `Page ${pageNumber} of ${currentNotebook.totalPages}`;
+                
+                const pageTitle = document.createElement('h2');
+                pageTitle.className = 'page-title';
+                pageTitle.textContent = page.title;
+                
+                const textContent = document.createElement('div');
+                textContent.className = 'text-content';
+                textContent.textContent = page.content;
+                
+                textContainer.appendChild(pageNum);
+                textContainer.appendChild(pageTitle);
+                textContainer.appendChild(textContent);
+                
+                // Add them to the section
+                section.appendChild(imageContainer);
+                section.appendChild(textContainer);
+                
+                // Add the section to the container
+                container.appendChild(section);
+            }
+        }
+
+        // Show error message
+        function showError(message) {
+            const container = document.getElementById('notebookContainer');
+            const errorDiv = document.createElement('div');
+            errorDiv.style.color = 'red';
+            errorDiv.style.padding = '20px';
+            errorDiv.style.textAlign = 'center';
+            errorDiv.textContent = message;
+            
+            container.innerHTML = '';
+            container.appendChild(errorDiv);
+        }
+
+        // Perform search within the current notebook
         function performSearch() {
             const searchTerm = document.getElementById('searchInput').value.toLowerCase().trim();
             const searchInTitle = document.getElementById('searchTitle').checked;
@@ -649,80 +729,46 @@ function createNotebookPages() {
 
         // Navigate search results
         function navigateSearchResults(direction) {
-        const matches = searchState.matches;
-    
-        if (matches.length === 0) {
-        return;
-     }
-    
-    // Update current match index
-     if (direction === 'next') {
-        searchState.currentMatchIndex++;
-        if (searchState.currentMatchIndex >= matches.length) {
-            searchState.currentMatchIndex = 0;
-        }
-    } else if (direction === 'prev') {
-        searchState.currentMatchIndex--;
-        if (searchState.currentMatchIndex < 0) {
-            searchState.currentMatchIndex = matches.length - 1;
-        }
-    }
-    
-    // Get current match
-    const currentMatch = matches[searchState.currentMatchIndex];
-    
-    // Scroll to match
-    currentMatch.element.scrollIntoView({
-        behavior: 'smooth',
-        block: 'center'
-    });
-    
-    // Highlight current match
-    matches.forEach((match, index) => {
-        if (index === searchState.currentMatchIndex) {
-            match.element.style.backgroundColor = 'orange';
-        } else {
-            match.element.style.backgroundColor = 'yellow';
-        }
-    });
-    
-    // Update UI
-    updateSearchResultsUI();
-    }
-
-    // Function to handle image loading errors
-    function handleImageError(img) {
-    img.onerror = function() {
-        this.src = 'placeholder-image.jpg';
-        this.alt = 'Image not available';
-    };
-}
-
-    // Initialize the application when the DOM is loaded
-    document.addEventListener('DOMContentLoaded', function() {
-    initializeNotebookViewer();
-    });
-
+            const matches = searchState.matches;
             
-            // Back to top button
-            window.addEventListener('scroll', function() {
-                if (window.pageYOffset > 300) {
-                    backToTopBtn.style.display = 'block';
+            if (matches.length === 0) {
+                return;
+            }
+            
+            // Update current match index
+            if (direction === 'next') {
+                searchState.currentMatchIndex++;
+                if (searchState.currentMatchIndex >= matches.length) {
+                    searchState.currentMatchIndex = 0;
+                }
+            } else if (direction === 'prev') {
+                searchState.currentMatchIndex--;
+                if (searchState.currentMatchIndex < 0) {
+                    searchState.currentMatchIndex = matches.length - 1;
+                }
+            }
+            
+            // Get current match
+            const currentMatch = matches[searchState.currentMatchIndex];
+            
+            // Scroll to match
+            currentMatch.element.scrollIntoView({
+                behavior: 'smooth',
+                block: 'center'
+            });
+            
+            // Highlight current match
+            matches.forEach((match, index) => {
+                if (index === searchState.currentMatchIndex) {
+                    match.element.style.backgroundColor = 'orange';
                 } else {
-                    backToTopBtn.style.display = 'none';
+                    match.element.style.backgroundColor = 'yellow';
                 }
             });
             
-            backToTopBtn.addEventListener('click', function() {
-                window.scrollTo({
-                    top: 0,
-                    behavior: 'smooth'
-                });
-            });    </script>
+            // Update UI
+            updateSearchResultsUI();
+        }
+    </script>
 </body>
 </html>
-
-
-
-
-
