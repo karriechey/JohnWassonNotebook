@@ -5,7 +5,6 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Wasson Meteorite Notebook Viewer</title>
     <link rel="stylesheet" href="styles/main.css">
-
 </head>
 <body>
     <div class="header">
@@ -41,518 +40,108 @@
     
     <button id="backToTop" class="back-to-top" title="Back to Top">↑</button>
 
+    <!-- Primary: Local JavaScript files -->
+    <script src="js/config.js"></script>
+    <script src="js/imageUtils.js"></script>
+    <script src="js/notebookLoader.js"></script>
+    <script src="js/pageRenderer.js"></script>
+    <script src="js/searchModule.js"></script>
+    <script src="js/eventHandlers.js"></script>
+    <script src="js/debug.js"></script>
+    <script src="js/main.js"></script>
+    
+    <!-- Secondary: CDN fallback if local files don't load -->
     <script>
-        // Configuration object for all notebooks
-        // Add more notebooks as needed, following the same format
-        const notebooksConfig = {
-            baseUrl: 'https://raw.githubusercontent.com/karriechey/JohnWassonNotebook/main/',
-            notebooks: [
-                {
-                    id: 'an-ar',
-                    title: 'John Wasson Meteorite Notebook (AN-AR)',
-                    imagePrefix: 'An-Ar_page-',
-                    textPrefix: 'An-Ar_text-',
-                    totalPages: 20
-                },
-                {
-                    id: 'as-ba',
-                    title: 'John Wasson Meteorite Notebook (AS-BA)',
-                    imagePrefix: 'As-Ba_page-',
-                    textPrefix: 'As-Ba_text-',
-                    totalPages: 25
-                },
-                {
-                    id: 'bc-bl',
-                    title: 'John Wasson Meteorite Notebook (BC-BL)',
-                    imagePrefix: 'Bc-Bl_page-',
-                    textPrefix: 'Bc-Bl_text-',
-                    totalPages: 22
-                },
-                {
-                    id: 'bo-br',
-                    title: 'John Wasson Meteorite Notebook (BO-BR)',
-                    imagePrefix: 'Bo-Br_page-',
-                    textPrefix: 'Bo-Br_text-',
-                    totalPages: 30
-                },
-                {
-                    id: 'bu-ca',
-                    title: 'John Wasson Meteorite Notebook (BU-CA)',
-                    imagePrefix: 'Bu-Ca_page-',
-                    textPrefix: 'Bu-Ca_text-',
-                    totalPages: 28
+        // Check if scripts loaded correctly
+        window.addEventListener('load', function() {
+            setTimeout(function() {
+                // If notebooksConfig is not defined or initializeNotebookViewer is not a function,
+                // the scripts didn't load correctly
+                if (typeof notebooksConfig === 'undefined' || typeof initializeNotebookViewer !== 'function') {
+                    console.log('Local scripts did not load correctly, trying CDN versions...');
+                    
+                    // Load scripts from CDN
+                    loadScriptsFromCDN();
                 }
-                // Add more notebooks here as needed
-            ]
-        };
-
-        // Current state variables
-        let currentNotebook = null;
-        let pageData = [];
-
-        // Search state
-        let searchState = {
-            matches: [],
-            currentMatchIndex: -1
-        };
-
-        // Initialize the viewer when the DOM is loaded
-        document.addEventListener('DOMContentLoaded', function() {
-            initializeNotebookViewer();
+            }, 1000);
         });
-
-        // Main initialization function
-        function initializeNotebookViewer() {
-            // Populate notebook selector dropdown
-            populateNotebookSelector();
+        
+        // Function to load scripts from CDN
+        function loadScriptsFromCDN() {
+            // Clear any previous script tags
+            document.querySelectorAll('script[data-cdn]').forEach(script => script.remove());
             
-            // Set up event listeners
-            setupEventListeners();
-            
-            // Load the default notebook (AN-AR)
-            loadNotebook('an-ar');
-        }
-
-        // Populate the notebook selector dropdown
-        function populateNotebookSelector() {
-            const selectElement = document.getElementById('notebookSelect');
-            
-            // Sort notebooks alphabetically
-            const sortedNotebooks = [...notebooksConfig.notebooks].sort((a, b) => 
-                a.title.localeCompare(b.title)
-            );
-            
-            // Add options to the select element
-            sortedNotebooks.forEach(notebook => {
-                const option = document.createElement('option');
-                option.value = notebook.id;
-                option.textContent = notebook.title;
-                selectElement.appendChild(option);
-            });
-            
-            // Select AN-AR by default
-            selectElement.value = 'an-ar';
-        }
-
-        // Set up all event listeners
-        function setupEventListeners() {
-            const notebookSelect = document.getElementById('notebookSelect');
-            const searchInput = document.getElementById('searchInput');
-            const searchButton = document.getElementById('searchButton');
-            const backToTopBtn = document.getElementById('backToTop');
-            const prevResultBtn = document.getElementById('prevResult');
-            const nextResultBtn = document.getElementById('nextResult');
-            
-            // Notebook selection change
-            notebookSelect.addEventListener('change', function() {
-                const notebookId = this.value;
-                if (notebookId) {
-                    loadNotebook(notebookId);
-                }
-            });
-            
-            // Search functionality
-            searchInput.addEventListener('keyup', function(event) {
-                if (event.key === 'Enter') {
-                    performSearch();
-                }
-            });
-            
-            searchButton.addEventListener('click', performSearch);
-            
-            // Back to top button
-            window.addEventListener('scroll', function() {
-                if (window.pageYOffset > 300) {
-                    backToTopBtn.style.display = 'block';
-                } else {
-                    backToTopBtn.style.display = 'none';
-                }
-            });
-            
-            backToTopBtn.addEventListener('click', function() {
-                window.scrollTo({
-                    top: 0,
-                    behavior: 'smooth'
-                });
-            });
-            
-            // Search navigation
-            prevResultBtn.addEventListener('click', function() {
-                navigateSearchResults('prev');
-            });
-            
-            nextResultBtn.addEventListener('click', function() {
-                navigateSearchResults('next');
-            });
-        }
-
-        // Load a notebook by ID
-        function loadNotebook(notebookId) {
-            // Find the notebook configuration
-            currentNotebook = notebooksConfig.notebooks.find(nb => nb.id === notebookId);
-            
-            if (!currentNotebook) {
-                showError('Notebook not found');
-                return;
-            }
-            
-            // Update UI
-            document.getElementById('notebookTitle').textContent = currentNotebook.title;
-            document.title = currentNotebook.title;
-            
-            // Show loading message
-            const loadingMessage = document.getElementById('loadingMessage');
-            loadingMessage.textContent = 'Loading notebook data...';
-            loadingMessage.style.display = 'block';
-            
-            // Clear any previous content
-            const container = document.getElementById('notebookContainer');
-            container.innerHTML = '';
-            container.appendChild(loadingMessage);
-            
-            // Reset search state
-            clearSearchHighlights();
-            searchState = {
-                matches: [],
-                currentMatchIndex: -1
-            };
-            
-            // For testing with embedded data (will be replaced with actual file loading)
-            if (notebookId === 'an-ar') {
-                // Use embedded data for AN-AR notebook
-                loadEmbeddedData();
-            } else {
-                // Load from files for other notebooks
-                loadNotebookData();
-            }
-        }
-
-        // Load embedded data for AN-AR notebook (for testing)
-        function loadEmbeddedData() {
-            // This is sample data - in the final version, this would be loaded from text files
-            pageData = [
-                {
-                    title: "Anderson (Ohio, USA)",
-                    content: "30 III 68 From Harvard, entire 170g mass. Broke off small fragment. Rounded olivine, in many sized spheres from 0.3 to 1.0 cm. Some \"coalesced.\" There seems to be a border between coalesced nodules - indicates Schreiber, or differently oriented crystal structures, or both. Thin deposits of Schreiber seem to surround olivine. The olivine only appears to occupy ~50% of area in this section, and is definitely not close-packed. One metallic area is ~1.5 cm across. Small fragment shows some surface oxidation, but not too much."
-                },
-                {
-                    title: "Angelica",
-                    content: "9 II 70 USNM#2177, 4.8g, Area ~ 2 cm²; polished and etched (30 sec);  \nrather regular Widmanstätten pattern, band width ~0.5-1 mm; this piece contains an inclusion of Troilite and Cohenite (?) (see picture), and a small hole without oxidation products; most of the plessite shows micro-Widmanstätten structure. There are some very thin long cracks in this piece; surface slightly oxidized"
-                },
-                {
-                    title: "Angra Dos Reis (vion)",
-                    content: "IN 381\n\nHex JA  \n5.46% Ni, .2% P  \n57 ppm Ga, 188 ppm Ge, 31 ppm Ir  \nCohenite, Troilite, Schreibersite  \nVFB\n\nHexahedrite  \n5.5% Ni  \n.2% P  \nMany Habolites present  \nNeumann lines  \nSome Schreibersite  \n2 Vhard irregular inclusions, probably schreibersite  \nEffects of torsion visible along one side.\n\nINAA (1) 11 I 77  \n(2) 21 IX 77"
-                },
-                // Sample data continued as in original, truncated for brevity
-                {
-                    title: "Arvorezinha",
-                    content: "This iron is from Zucoloto. She wondered if it could be Campo and the only evidence that it is not is a high Au content.\n\nPolishing (rough) and etching shows much evidence of oxidation, some L-shaped inclusions (bar thicknesses ~ 0.1mm, bar lengths 0.2 to 3 mm).  \nI am not sure that these are. They seem to be schreibisite.*\n\nThe sample is badly corroded and the only evidence regarding boundaries is that areas outlined by corrosion have dimensions of ~ 2 mm. But the ca. 1 cm^2 sample shows no kamacite boundaries. I speculate that it may have suffered reheating.\n\n*Perhaps these \"inclusions\" are taenite. One triangular area could be plessite. They occupy ~ 1-2% of the surface."
-                }
+            // List of scripts to load from CDN
+            const scripts = [
+                { src: 'config.js', global: 'notebooksConfig' },
+                { src: 'imageUtils.js', global: 'createImageElement' },
+                { src: 'notebookLoader.js', global: 'loadNotebook' },
+                { src: 'pageRenderer.js', global: 'createNotebookPages' },
+                { src: 'searchModule.js', global: 'performSearch' },
+                { src: 'eventHandlers.js', global: 'setupEventListeners' },
+                { src: 'debug.js', global: 'meteoriteDebug' },
+                { src: 'main.js', global: 'initializeNotebookViewer' }
             ];
             
-            // Create notebook content
-            createNotebookPages();
-            
-            // Hide loading message
-            document.getElementById('loadingMessage').style.display = 'none';
-        }
-
-        // Load notebook data from text files
-        function loadNotebookData() {
-            // Reset page data
-            pageData = [];
-            
-            // Create array of promises for loading text files
-            const promises = [];
-            
-            for (let i = 1; i <= currentNotebook.totalPages; i++) {
-                const paddedNumber = i.toString().padStart(4, '0');
-                const textUrl = `${notebooksConfig.baseUrl}${currentNotebook.textPrefix}${paddedNumber}.txt`;
-                
-                const promise = fetch(textUrl)
-                    .then(response => {
-                        if (!response.ok) {
-                            throw new Error(`Failed to load text file: ${textUrl}`);
-                        }
-                        return response.text();
-                    })
-                    .then(text => {
-                        // Parse the text file (first line as title, rest as content)
-                        const lines = text.trim().split('\n');
-                        const title = lines[0] || `Page ${i}`;
-                        const content = lines.slice(1).join('\n').trim();
-                        
-                        // Add to page data array with the correct index
-                        pageData[i-1] = {
-                            title: title,
-                            content: content
-                        };
-                    })
-                    .catch(error => {
-                        console.error(`Error loading text for page ${i}:`, error);
-                        // Add placeholder data on error
-                        pageData[i-1] = {
-                            title: `Page ${i} (Data not available)`,
-                            content: 'Text data could not be loaded.'
-                        };
-                    });
-                
-                promises.push(promise);
-            }
-            
-            // Wait for all text files to load
-            Promise.all(promises)
-                .then(() => {
-                    // Create notebook content
-                    createNotebookPages();
-                    
-                    // Hide loading message
-                    document.getElementById('loadingMessage').style.display = 'none';
-                })
-                .catch(error => {
-                    console.error('Error loading notebook data:', error);
-                    document.getElementById('loadingMessage').textContent = 
-                        'Error loading notebook data. Please try again later.';
-                });
-        }
-
-        // Create notebook pages in the DOM
-        function createNotebookPages() {
-            const container = document.getElementById('notebookContainer');
-            container.innerHTML = ''; // Clear container
-            
-            for (let i = 0; i < pageData.length; i++) {
-                const page = pageData[i];
-                const pageNumber = i + 1;
-                
-                // Create page section
-                const section = document.createElement('section');
-                section.className = 'page-section';
-                section.id = `page-${pageNumber}`;
-                
-                // Create image container
-                const imageContainer = document.createElement('div');
-                imageContainer.className = 'image-container';
-                
-                const imageWrapper = document.createElement('div');
-                imageWrapper.className = 'image-wrapper';
-                
-                const img = document.createElement('img');
-                // Format the page number with padding zeros
-                const paddedNumber = pageNumber.toString().padStart(4, '0');
-                img.src = `${notebooksConfig.baseUrl}${currentNotebook.imagePrefix}${paddedNumber}.jpg`;
-                img.alt = `Page ${pageNumber}: ${page.title}`;
-                img.loading = 'lazy'; // Lazy load images for better performance
-                
-                // Add error handler for images
-                img.onerror = function() {
-                    this.src = 'placeholder-image.jpg'; // Fallback image
-                    this.alt = 'Image not available';
-                    this.onerror = null; // Prevent infinite loop if placeholder is also missing
-                };
-                
-                imageWrapper.appendChild(img);
-                imageContainer.appendChild(imageWrapper);
-                
-                // Create text container
-                const textContainer = document.createElement('div');
-                textContainer.className = 'text-container';
-                
-                const pageNum = document.createElement('div');
-                pageNum.className = 'page-number';
-                pageNum.textContent = `Page ${pageNumber} of ${currentNotebook.totalPages}`;
-                
-                const pageTitle = document.createElement('h2');
-                pageTitle.className = 'page-title';
-                pageTitle.textContent = page.title;
-                
-                const textContent = document.createElement('div');
-                textContent.className = 'text-content';
-                textContent.textContent = page.content;
-                
-                textContainer.appendChild(pageNum);
-                textContainer.appendChild(pageTitle);
-                textContainer.appendChild(textContent);
-                
-                // Add them to the section
-                section.appendChild(imageContainer);
-                section.appendChild(textContainer);
-                
-                // Add the section to the container
-                container.appendChild(section);
-            }
-        }
-
-        // Show error message
-        function showError(message) {
-            const container = document.getElementById('notebookContainer');
-            const errorDiv = document.createElement('div');
-            errorDiv.style.color = 'red';
-            errorDiv.style.padding = '20px';
-            errorDiv.style.textAlign = 'center';
-            errorDiv.textContent = message;
-            
-            container.innerHTML = '';
-            container.appendChild(errorDiv);
-        }
-
-        // Perform search within the current notebook
-        function performSearch() {
-            const searchTerm = document.getElementById('searchInput').value.toLowerCase().trim();
-            const searchInTitle = document.getElementById('searchTitle').checked;
-            const searchInContent = document.getElementById('searchContent').checked;
-            
-            if (searchTerm === '') {
-                return;
-            }
-            
-            // Clear previous search results
-            clearSearchHighlights();
-            
-            // Reset search state
-            searchState = {
-                matches: [],
-                currentMatchIndex: -1
-            };
-            
-            // Find matches
-            for (let i = 0; i < pageData.length; i++) {
-                const pageNumber = i + 1;
-                const page = pageData[i];
-                const titleMatches = searchInTitle && page.title.toLowerCase().includes(searchTerm);
-                const contentMatches = searchInContent && page.content.toLowerCase().includes(searchTerm);
-                
-                if (titleMatches || contentMatches) {
-                    const pageSection = document.querySelector(`#page-${pageNumber}`);
-                    
-                    // Highlight title matches
-                    if (titleMatches) {
-                        const titleElement = pageSection.querySelector('.page-title');
-                        highlightText(titleElement, searchTerm);
-                        
-                        // Add to matches
-                        const marks = titleElement.querySelectorAll('mark');
-                        for (let mark of marks) {
-                            searchState.matches.push({
-                                element: mark,
-                                pageNumber: pageNumber
-                            });
-                        }
-                    }
-                    
-                    // Highlight content matches
-                    if (contentMatches) {
-                        const contentElement = pageSection.querySelector('.text-content');
-                        highlightText(contentElement, searchTerm);
-                        
-                        // Add to matches
-                        const marks = contentElement.querySelectorAll('mark');
-                        for (let mark of marks) {
-                            searchState.matches.push({
-                                element: mark,
-                                pageNumber: pageNumber
-                            });
-                        }
-                    }
-                }
-            }
-            
-            // Update search results UI
-            updateSearchResultsUI();
-            
-            // Navigate to first result if found
-            if (searchState.matches.length > 0) {
-                navigateSearchResults('next');
-            } else {
-                alert('No matches found for: ' + searchTerm);
-            }
-        }
-
-        // Highlight text in an element
-        function highlightText(element, searchTerm) {
-            const text = element.textContent;
-            const regex = new RegExp(searchTerm, 'gi');
-            const highlightedText = text.replace(regex, match => `<mark>${match}</mark>`);
-            element.innerHTML = highlightedText;
-        }
-
-        // Clear all search highlights
-        function clearSearchHighlights() {
-            document.querySelectorAll('mark').forEach(mark => {
-                const parent = mark.parentNode;
-                parent.replaceChild(document.createTextNode(mark.textContent), mark);
-                parent.normalize();
+            // Load each script sequentially
+            let promise = Promise.resolve();
+            scripts.forEach(script => {
+                promise = promise.then(() => loadScript(script.src, script.global));
             });
             
-            // Hide search results UI
-            document.getElementById('searchResults').style.display = 'none';
-        }
-
-        // Update search results UI
-        function updateSearchResultsUI() {
-            const resultsCount = searchState.matches.length;
-            const resultsElement = document.getElementById('searchResults');
-            const resultsCountElement = document.getElementById('searchResultsCount');
-            const currentResultElement = document.getElementById('currentResult');
-            const prevResultBtn = document.getElementById('prevResult');
-            const nextResultBtn = document.getElementById('nextResult');
-            
-            if (resultsCount > 0) {
-                resultsElement.style.display = 'block';
-                resultsCountElement.textContent = `${resultsCount} result${resultsCount !== 1 ? 's' : ''} found`;
-                
-                // Update current result indicator
-                currentResultElement.textContent = `${searchState.currentMatchIndex + 1}/${resultsCount}`;
-                
-                // Enable/disable navigation buttons
-                prevResultBtn.disabled = searchState.currentMatchIndex <= 0;
-                nextResultBtn.disabled = searchState.currentMatchIndex >= resultsCount - 1;
-            } else {
-                resultsElement.style.display = 'none';
-            }
-        }
-
-        // Navigate search results
-        function navigateSearchResults(direction) {
-            const matches = searchState.matches;
-            
-            if (matches.length === 0) {
-                return;
-            }
-            
-            // Update current match index
-            if (direction === 'next') {
-                searchState.currentMatchIndex++;
-                if (searchState.currentMatchIndex >= matches.length) {
-                    searchState.currentMatchIndex = 0;
-                }
-            } else if (direction === 'prev') {
-                searchState.currentMatchIndex--;
-                if (searchState.currentMatchIndex < 0) {
-                    searchState.currentMatchIndex = matches.length - 1;
-                }
-            }
-            
-            // Get current match
-            const currentMatch = matches[searchState.currentMatchIndex];
-            
-            // Scroll to match
-            currentMatch.element.scrollIntoView({
-                behavior: 'smooth',
-                block: 'center'
-            });
-            
-            // Highlight current match
-            matches.forEach((match, index) => {
-                if (index === searchState.currentMatchIndex) {
-                    match.element.style.backgroundColor = 'orange';
+            // After all scripts are loaded, initialize the viewer
+            promise.then(() => {
+                if (typeof initializeNotebookViewer === 'function') {
+                    console.log('All CDN scripts loaded successfully');
+                    initializeNotebookViewer();
                 } else {
-                    match.element.style.backgroundColor = 'yellow';
+                    showLoadingError();
                 }
+            }).catch(error => {
+                console.error('Error loading CDN scripts:', error);
+                showLoadingError();
             });
-            
-            // Update UI
-            updateSearchResultsUI();
+        }
+        
+        // Function to load a single script
+        function loadScript(src, globalCheck) {
+            return new Promise((resolve, reject) => {
+                const script = document.createElement('script');
+                script.src = `https://cdn.jsdelivr.net/gh/karriechey/JohnWassonNotebook@main/js/${src}`;
+                script.setAttribute('data-cdn', 'true');
+                script.onload = function() {
+                    // Verify that the script loaded correctly by checking for a global variable/function
+                    if (typeof window[globalCheck] !== 'undefined') {
+                        console.log(`Successfully loaded ${src} from CDN`);
+                        resolve();
+                    } else {
+                        console.error(`Script ${src} loaded but ${globalCheck} is not defined`);
+                        reject(new Error(`Script ${src} loaded but ${globalCheck} is not defined`));
+                    }
+                };
+                script.onerror = function() {
+                    console.error(`Failed to load ${src} from CDN`);
+                    reject(new Error(`Failed to load ${src} from CDN`));
+                };
+                document.body.appendChild(script);
+            });
+        }
+        
+        // Function to show loading error
+        function showLoadingError() {
+            const container = document.getElementById('notebookContainer');
+            container.innerHTML = `
+                <div style="text-align: center; padding: 20px; color: #d9534f;">
+                    <h2>Unable to load notebook viewer</h2>
+                    <p>We're having trouble loading the necessary components. Please try:</p>
+                    <ul style="list-style-type: none; padding: 0;">
+                        <li>Refreshing the page</li>
+                        <li>Clearing your browser cache</li>
+                        <li>Trying a different browser</li>
+                    </ul>
+                    <button onclick="window.location.reload()">Refresh Page</button>
+                </div>
+            `;
         }
     </script>
 </body>
