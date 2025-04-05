@@ -41,14 +41,14 @@
     <button id="backToTop" class="back-to-top" title="Back to Top">↑</button>
 
     <!-- Primary: Local JavaScript files -->
-    <script src="js/config.js"></script>
-    <script src="js/imageUtils.js"></script>
-    <script src="js/notebookLoader.js"></script>
-    <script src="js/pageRenderer.js"></script>
-    <script src="js/searchModule.js"></script>
-    <script src="js/eventHandlers.js"></script>
-    <script src="js/debug.js"></script>
-    <script src="js/main.js"></script>
+    <script src="scripts/config.js"></script>
+    <script src="scripts/imageUtils.js"></script>
+    <script src="scripts/notebookLoader.js"></script>
+    <script src="scripts/pageRenderer.js"></script>
+    <script src="scripts/searchModule.js"></script>
+    <script src="scripts/eventHandelers.js"></script>
+    <script src="scripts/debug.js"></script>
+    <script src="scripts/main.js"></script>
     
     <!-- Secondary: CDN fallback if local files don't load -->
     <script>
@@ -107,7 +107,7 @@
         function loadScript(src, globalCheck) {
             return new Promise((resolve, reject) => {
                 const script = document.createElement('script');
-                script.src = `https://cdn.jsdelivr.net/gh/karriechey/JohnWassonNotebook@main/js/${src}`;
+                script.src = `https://cdn.jsdelivr.net/gh/karriechey/JohnWassonNotebook@main/scripts/${src}`;
                 script.setAttribute('data-cdn', 'true');
                 script.onload = function() {
                     // Verify that the script loaded correctly by checking for a global variable/function

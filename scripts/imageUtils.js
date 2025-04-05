@@ -44,6 +44,9 @@ function createImageElement(notebook, pageNumber, altText) {
     // Set descriptive alt text for accessibility
     img.alt = altText || `Page ${pageNumber}`;
     
+    // Add class for styling
+    img.className = 'notebook-image';
+    
     // Set a base64 encoded placeholder image that will display when error occurs
     // This is a tiny gray square image encoded as base64
     const placeholderImage = 'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAGQAAABkCAYAAABw4pVUAAAABmJLR0QA/wD/AP+gvaeTAAAAB3RJTUUH4QIFBCg7lhEQ2gAAAAlwSFlzAAAOwwAADsMBx2+oZAAAABl0RVh0Q29tbWVudABDcmVhdGVkIHdpdGggR0lNUFeBDhcAAABsSURBVHja7c0BDQAAAMKg909tDwcUAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAADAuyoAAAEGutPR7QAAAABJRU5ErkJggg==';
@@ -64,25 +67,26 @@ function createImageElement(notebook, pageNumber, altText) {
         const imageFolder = this.dataset.imageFolder;
         const imagePrefix = this.dataset.imagePrefix;
         
+        // Try alternate image naming formats
+        if (this.src.includes('_page-')) {
+            // Try with different case for page prefix
+            console.log('Trying lowercase page prefix...');
+            this.src = `${notebooksConfig.baseUrl}${imageFolder}${imagePrefix.toLowerCase()}_page-${paddedNumber}.jpg`;
+        }
         // Try GitHub Pages URL format as a fallback
-        if (this.src.includes('raw.githubusercontent.com')) {
+        else if (this.src.includes('raw.githubusercontent.com')) {
             console.log('Trying GitHub Pages format...');
-            this.src = `https://karriechey.github.io/JohnWassonNotebook/images/${imageFolder}${imagePrefix}${paddedNumber}.jpg`;
+            this.src = `https://karriechey.github.io/JohnWassonNotebook/${imageFolder}${imagePrefix}${paddedNumber}.jpg`;
         }
-        // If GitHub Pages format failed, try a relative path
+        // If GitHub Pages format failed, try a direct relative path
         else if (this.src.includes('github.io')) {
-            console.log('Trying relative path format...');
-            this.src = `${imageFolder}${imagePrefix}${paddedNumber}.jpg`;
+            console.log('Trying direct relative path...');
+            this.src = `images/${notebookId.toUpperCase()}/${imagePrefix}${paddedNumber}.jpg`;
         }
-        // Try without the folder path
-        else if (this.src.includes(imageFolder)) {
-            console.log('Trying without folder path...');
-            this.src = `https://raw.githubusercontent.com/karriechey/JohnWassonNotebook/main/images/${imagePrefix}${paddedNumber}.jpg`;
-        }
-        // Try with lowercase prefix
-        else if (!this.src.includes(imagePrefix.toLowerCase())) {
-            console.log('Trying lowercase prefix...');
-            this.src = `https://raw.githubusercontent.com/karriechey/JohnWassonNotebook/main/images/${imageFolder}${imagePrefix.toLowerCase()}${paddedNumber}.jpg`;
+        // Try with simple naming convention (just the page number)
+        else if (this.src.includes(imagePrefix)) {
+            console.log('Trying simple page number format...');
+            this.src = `${notebooksConfig.baseUrl}${imageFolder}page-${paddedNumber}.jpg`;
         }
         // If all attempts failed, use the placeholder
         else if (!this.src.startsWith('data:image/')) {
@@ -90,8 +94,58 @@ function createImageElement(notebook, pageNumber, altText) {
             this.src = placeholderImage;
             this.alt = 'Image not available';
             this.classList.add('placeholder-image');
+            
+            // Add a visible error message for the user
+            const parent = this.parentNode;
+            if (parent) {
+                const errorMsg = document.createElement('div');
+                errorMsg.className = 'image-error';
+                errorMsg.textContent = 'Image not available';
+                parent.appendChild(errorMsg);
+            }
         }
     };
     
     return img;
 }
+
+/**
+ * Debug function to test all possible image paths for a notebook page
+ * @param {Object} notebook - The notebook configuration object
+ * @param {number} pageNumber - The page number to test
+ */
+function testAllImagePaths(notebook, pageNumber) {
+    const paddedNumber = pageNumber.toString().padStart(4, '0');
+    const paths = [
+        // Standard path
+        `${notebooksConfig.baseUrl}${notebook.imageFolder}${notebook.imagePrefix}${paddedNumber}.jpg`,
+        // Lowercase prefix
+        `${notebooksConfig.baseUrl}${notebook.imageFolder}${notebook.imagePrefix.toLowerCase()}${paddedNumber}.jpg`,
+        // GitHub Pages path
+        `https://karriechey.github.io/JohnWassonNotebook/${notebook.imageFolder}${notebook.imagePrefix}${paddedNumber}.jpg`,
+        // Direct relative path
+        `images/${notebook.id.toUpperCase()}/${notebook.imagePrefix}${paddedNumber}.jpg`,
+        // Simple page number format
+        `${notebooksConfig.baseUrl}${notebook.imageFolder}page-${paddedNumber}.jpg`
+    ];
+    
+    console.log('Testing all possible image paths for', notebook.id, 'page', pageNumber);
+    
+    paths.forEach(path => {
+        const testImg = new Image();
+        testImg.src = path;
+        testImg.onload = function() {
+            console.log('✅ Success:', path);
+        };
+        testImg.onerror = function() {
+            console.log('❌ Failed:', path);
+        };
+    });
+}
+
+// Expose functions for debugging
+window.imageUtils = {
+    getImagePath,
+    createImageElement,
+    testAllImagePaths
+};

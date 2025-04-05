@@ -21,10 +21,19 @@ const notebooksConfig = {
             id: 'a-al',
             title: 'John Wasson Meteorite Notebook (A-AL)',
             imageFolder: 'images/A_AL/',
-            imagePrefix: 'A-Al_page-',
+            imagePrefix: 'A-AL_page-',
             dataFile: 'data/a_al.txt',
             totalPages: 26
         }
         // Add more notebooks here as needed
+    ],
+    
+    // Alternative image paths to try if the primary paths fail
+    alternativeImageFormats: [
+        { pattern: '{baseUrl}{imageFolder}{imagePrefix}{paddedNumber}.jpg' },
+        { pattern: '{baseUrl}{imageFolder}{lowercasePrefix}{paddedNumber}.jpg' },
+        { pattern: 'https://karriechey.github.io/JohnWassonNotebook/{imageFolder}{imagePrefix}{paddedNumber}.jpg' },
+        { pattern: 'images/{uppercaseId}/{imagePrefix}{paddedNumber}.jpg' },
+        { pattern: '{baseUrl}{imageFolder}page-{paddedNumber}.jpg' }
     ]
 };
