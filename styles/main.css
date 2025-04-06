@@ -186,6 +186,68 @@ mark {
     cursor: not-allowed;
 }
 
+
+/* Floating search navigation panel */
+.floating-search-nav {
+    position: fixed;
+    bottom: 20px;
+    left: 50%;
+    transform: translateX(-50%);
+    display: flex;
+    align-items: center;
+    background-color: rgba(0, 0, 0, 0.7);
+    color: white;
+    padding: 10px 15px;
+    border-radius: 30px;
+    box-shadow: 0 3px 10px rgba(0, 0, 0, 0.2);
+    z-index: 1000;
+    transition: opacity 0.3s, transform 0.3s;
+    opacity: 0;
+    pointer-events: none;
+    gap: 10px;
+}
+
+.floating-search-nav.active {
+    opacity: 1;
+    pointer-events: all;
+    transform: translateX(-50%) translateY(0);
+}
+
+.floating-search-nav button {
+    background-color: transparent;
+    border: 1px solid rgba(255, 255, 255, 0.5);
+    color: white;
+    width: 36px;
+    height: 36px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    font-size: 16px;
+    transition: background-color 0.2s;
+}
+
+.floating-search-nav button:hover {
+    background-color: rgba(255, 255, 255, 0.2);
+}
+
+.floating-search-nav button:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+}
+
+.floating-search-nav .count {
+    padding: 0 10px;
+    font-size: 14px;
+    font-weight: bold;
+}
+
+.floating-search-nav .close-btn {
+    font-size: 18px;
+    margin-left: 5px;
+}
+
 @media (max-width: 768px) {
     .page-section {
         flex-direction: column;
