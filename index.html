@@ -54,7 +54,7 @@
         <select id="notebookSelect" class="notebook-select">
             <!-- Notebooks will be populated dynamically -->
         </select>
-        <button id="reloadNotebook" class="notebook-reload" title="Reload current notebook">↻</button>
+        <button id="clearSearch" class="notebook-reload" title="Clear search results">↻</button>
         <input type="text" id="searchInput" class="search-bar" placeholder="Search for keywords...">
         <div class="search-options">
             <label>
@@ -231,6 +231,40 @@
                 </div>
             `;
         }
+
+        // Reset Botton
+        document.addEventListener('DOMContentLoaded', function() {
+        // Get the clear search button (formerly reload button)
+        const clearSearchBtn = document.getElementById('clearSearch');
+        
+        if (clearSearchBtn) {
+            // Change the button's tooltip
+            clearSearchBtn.title = 'Clear search results';
+            
+            // Update the click event handler
+            clearSearchBtn.addEventListener('click', function() {
+                // Clear search highlights if the function exists
+                if (typeof clearSearchHighlights === 'function') {
+                    clearSearchHighlights();
+                }
+                
+                // Clear the search input field
+                const searchInput = document.getElementById('searchInput');
+                if (searchInput) {
+                    searchInput.value = '';
+                }
+                
+                // Hide the search results container
+                const searchResults = document.getElementById('searchResults');
+                if (searchResults) {
+                    searchResults.style.display = 'none';
+                }
+                
+                console.log('Search results cleared');
+            });
+        }
+    });
+
     </script>
 </body>
 </html>
