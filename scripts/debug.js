@@ -1,157 +1,181 @@
+// Debug notebook loading issues
 
-
-// Debug functions to help troubleshoot file loading issues
-
-// Add this to your index.html before the closing </body> tag:
-// <script src="js/debug.js"></script>
-
-// Enable debugging mode
-let debugMode = true;
-
-// Debug logger function
-function debugLog(message, data) {
-    if (!debugMode) return;
+document.addEventListener('DOMContentLoaded', function() {
+    // Add console debugging
+    console.log('Starting debug monitoring');
     
-    console.log(`%c[DEBUG] ${message}`, 'color: blue; font-weight: bold;', data || '');
-}
-
-// Test image loading
-function testImageLoading() {
-    if (!currentNotebook) {
-        console.error("No notebook loaded");
-        return;
-    }
-    
-    debugLog('Testing image loading for notebook', currentNotebook.id);
-    
-    // Test loading the first image
-    const testImg = new Image();
-    const paddedNumber = '0001';
-    testImg.src = `${notebooksConfig.baseUrl}${currentNotebook.imageFolder}${currentNotebook.imagePrefix}${paddedNumber}.jpg`;
-    
-    debugLog('Attempting to load image', testImg.src);
-    
-    testImg.onload = function() {
-        debugLog('✅ Image loaded successfully', testImg.src);
-    };
-    
-    testImg.onerror = function() {
-        console.error('❌ Failed to load image', testImg.src);
-        
-        // Try alternative paths
-        debugLog('Trying alternative paths...');
-        
-        // Try without the prefix
-        const altImg1 = new Image();
-        altImg1.src = `${notebooksConfig.baseUrl}${currentNotebook.imageFolder}${paddedNumber}.jpg`;
-        debugLog('Testing', altImg1.src);
-        
-        altImg1.onload = function() {
-            debugLog('✅ Alternative path works', altImg1.src);
-            console.info('Suggestion: Update your config to use this path pattern');
-        };
-        
-        // Try different case
-        const altImg2 = new Image();
-        const lowercasePrefix = currentNotebook.imagePrefix.toLowerCase();
-        altImg2.src = `${notebooksConfig.baseUrl}${currentNotebook.imageFolder}${lowercasePrefix}${paddedNumber}.jpg`;
-        debugLog('Testing', altImg2.src);
-        
-        altImg2.onload = function() {
-            debugLog('✅ Alternative path works (lowercase)', altImg2.src);
-            console.info('Suggestion: Update your config to use lowercase prefix');
-        };
-    };
-}
-
-// Test text file loading
-function testTextLoading() {
-    if (!currentNotebook) {
-        console.error("No notebook loaded");
-        return;
-    }
-    
-    debugLog('Testing text file loading for notebook', currentNotebook.id);
-    
-    const textUrl = `${notebooksConfig.baseUrl}${currentNotebook.dataFile}`;
-    debugLog('Attempting to load text file', textUrl);
-    
-    fetch(textUrl)
-        .then(response => {
-            if (!response.ok) {
-                throw new Error(`Server responded with ${response.status}: ${response.statusText}`);
+    // Monitor notebook selection changes
+    const notebookSelect = document.getElementById('notebookSelect');
+    if (notebookSelect) {
+        const originalOnChange = notebookSelect.onchange;
+        notebookSelect.onchange = function(event) {
+            console.log(`Notebook selection changed to: ${this.value}`);
+            
+            // Force clear the container
+            const container = document.getElementById('notebookContainer');
+            if (container) {
+                console.log('Forcibly clearing notebook container');
+                container.innerHTML = '<div class="loading" id="loadingMessage">Loading notebook data...</div>';
             }
-            debugLog('✅ Text file loaded successfully', textUrl);
-            return response.text();
-        })
-        .then(text => {
-            debugLog('Text file content preview:', text.substring(0, 200) + '...');
-        })
-        .catch(error => {
-            console.error('❌ Failed to load text file', textUrl, error);
             
-            // Try alternative paths
-            debugLog('Trying alternative paths...');
-            
-            // Try with .txt explicitly added
-            const altUrl1 = `${textUrl}.txt`;
-            fetch(altUrl1)
-                .then(response => {
-                    if (!response.ok) throw new Error('Not found');
-                    debugLog('✅ Alternative path works', altUrl1);
-                    console.info('Suggestion: Update your config to use this path pattern');
-                })
-                .catch(() => {
-                    debugLog('❌ Alternative path failed', altUrl1);
-                });
-            
-            // Try lowercase filename
-            const altUrl2 = `${notebooksConfig.baseUrl}data/${currentNotebook.id.toLowerCase()}.txt`;
-            fetch(altUrl2)
-                .then(response => {
-                    if (!response.ok) throw new Error('Not found');
-                    debugLog('✅ Alternative path works', altUrl2);
-                    console.info('Suggestion: Update your config to use this path pattern');
-                })
-                .catch(() => {
-                    debugLog('❌ Alternative path failed', altUrl2);
-                });
-        });
-}
-
-// Add debugging commands to window for console access
-window.meteoriteDebug = {
-    testImageLoading,
-    testTextLoading,
-    toggleDebug: function() {
-        debugMode = !debugMode;
-        console.log(`Debug mode ${debugMode ? 'enabled' : 'disabled'}`);
+            // Call the original handler if it exists
+            if (typeof originalOnChange === 'function') {
+                originalOnChange.call(this, event);
+            }
+        };
     }
-};
-
-// Run tests when a notebook is loaded
-document.addEventListener('notebookLoaded', function(e) {
-    if (debugMode) {
-        setTimeout(() => {
-            testImageLoading();
-            testTextLoading();
-        }, 1000);
+    
+    // Monitor loadNotebook function
+    if (typeof loadNotebook === 'function') {
+        const originalLoadNotebook = loadNotebook;
+        window.loadNotebook = function(notebookId) {
+            console.log(`DEBUG: loadNotebook called for ${notebookId}`);
+            
+            // Reset pageData to ensure it's empty
+            pageData = [];
+            
+            return originalLoadNotebook(notebookId);
+        };
     }
+    
+    // Monitor parseNotebookData function
+    if (typeof parseNotebookData === 'function') {
+        const originalParseNotebookData = parseNotebookData;
+        window.parseNotebookData = function(text) {
+            console.log(`DEBUG: parseNotebookData called with text length: ${text.length}`);
+            console.log(`First 100 chars: ${text.substring(0, 100)}`);
+            
+            const result = originalParseNotebookData(text);
+            console.log(`DEBUG: parseNotebookData processed ${pageData.length} pages`);
+            return result;
+        };
+    }
+    
+    // Test function to reload the current notebook
+    window.reloadCurrentNotebook = function() {
+        if (currentNotebook) {
+            console.log(`Forcing reload of notebook: ${currentNotebook.id}`);
+            loadNotebook(currentNotebook.id);
+        } else {
+            console.log('No current notebook to reload');
+        }
+    };
+    
+    // Test function to manually load a notebook
+    window.manualLoadNotebook = function(notebookId) {
+        console.log(`Manually loading notebook: ${notebookId}`);
+        // Reset global state
+        pageData = [];
+        
+        // Load notebook
+        const notebook = notebooksConfig.notebooks.find(nb => nb.id === notebookId);
+        if (notebook) {
+            currentNotebook = notebook;
+            
+            // Update UI
+            document.getElementById('notebookTitle').textContent = notebook.title;
+            document.title = notebook.title;
+            
+            // Clear container and show loading
+            const container = document.getElementById('notebookContainer');
+            container.innerHTML = '<div class="loading" id="loadingMessage">Loading notebook data manually...</div>';
+            
+            // Load text data
+            const textUrl = `${notebooksConfig.baseUrl}${notebook.dataFile}`;
+            console.log(`Loading from: ${textUrl}`);
+            
+            fetch(textUrl)
+                .then(response => {
+                    if (!response.ok) {
+                        throw new Error(`Failed to load: ${response.status}`);
+                    }
+                    return response.text();
+                })
+                .then(text => {
+                    console.log(`Got text data, length: ${text.length}`);
+                    parseNotebookData(text);
+                    createNotebookPages();
+                    document.getElementById('loadingMessage').style.display = 'none';
+                })
+                .catch(error => {
+                    console.error('Manual load failed:', error);
+                    // Try embedded data as fallback
+                    loadEmbeddedData();
+                });
+        } else {
+            console.error(`Notebook not found: ${notebookId}`);
+        }
+    };
+    
+    console.log('Debug monitoring initialized');
+    console.log('Available debug commands:');
+    console.log('- window.reloadCurrentNotebook()');
+    console.log('- window.manualLoadNotebook("an-ar")');
+    console.log('- window.testAllImagePaths(currentNotebook, 1)');
 });
 
-// Add event to notify when notebook is loaded
-function notifyNotebookLoaded() {
-    document.dispatchEvent(new CustomEvent('notebookLoaded', {
-        detail: { notebookId: currentNotebook.id }
-    }));
+// Add custom styles for debug information
+const style = document.createElement('style');
+style.textContent = `
+.debug-info {
+    position: fixed;
+    bottom: 10px;
+    left: 10px;
+    background: rgba(0, 0, 0, 0.7);
+    color: #fff;
+    padding: 10px;
+    border-radius: 5px;
+    font-family: monospace;
+    font-size: 12px;
+    max-width: 400px;
+    max-height: 200px;
+    overflow: auto;
+    z-index: 9999;
+    display: none;
 }
 
-// Override the createNotebookPages function to add notification
-const originalCreateNotebookPages = window.createNotebookPages;
-window.createNotebookPages = function() {
-    originalCreateNotebookPages.apply(this, arguments);
-    notifyNotebookLoaded();
-};
+.debug-toggle {
+    position: fixed;
+    bottom: 10px;
+    left: 10px;
+    background: #333;
+    color: #fff;
+    border: none;
+    border-radius: 5px;
+    padding: 5px 10px;
+    cursor: pointer;
+    z-index: 10000;
+}
+`;
+document.head.appendChild(style);
 
-// Log initialization
-debugLog('Debug tools initialized. Access via window.meteoriteDebug in console.');
+// Add debug panel
+document.addEventListener('DOMContentLoaded', function() {
+    const debugToggle = document.createElement('button');
+    debugToggle.className = 'debug-toggle';
+    debugToggle.textContent = 'Debug';
+    
+    const debugInfo = document.createElement('div');
+    debugInfo.className = 'debug-info';
+    
+    document.body.appendChild(debugToggle);
+    document.body.appendChild(debugInfo);
+    
+    debugToggle.addEventListener('click', function() {
+        const display = debugInfo.style.display;
+        debugInfo.style.display = display === 'none' ? 'block' : 'none';
+        
+        if (debugInfo.style.display === 'block') {
+            // Update debug info
+            const info = [
+                `Current Notebook: ${currentNotebook ? currentNotebook.id : 'None'}`,
+                `Page Data Length: ${pageData ? pageData.length : 0}`,
+                `Total Pages: ${currentNotebook ? currentNotebook.totalPages : 0}`,
+                `Data URL: ${currentNotebook ? notebooksConfig.baseUrl + currentNotebook.dataFile : 'None'}`,
+                `Image Folder: ${currentNotebook ? currentNotebook.imageFolder : 'None'}`
+            ].join('<br>');
+            
+            debugInfo.innerHTML = info;
+        }
+    });
+});

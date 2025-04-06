@@ -5,12 +5,56 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Wasson Meteorite Notebook Viewer</title>
     <link rel="stylesheet" href="styles/main.css">
+    <style>
+        /* Additional styles for debugging and better UI */
+        .loading {
+            text-align: center;
+            padding: 20px;
+            font-size: 1.2em;
+            background-color: #f8f9fa;
+            border-radius: 5px;
+            margin: 20px 0;
+        }
+        
+        .placeholder-image {
+            border: 2px dashed #ccc;
+            background-color: #f5f5f5;
+            min-height: 300px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        
+        .image-error {
+            color: #721c24;
+            background-color: #f8d7da;
+            padding: 10px;
+            margin-top: 5px;
+            border-radius: 4px;
+            text-align: center;
+        }
+        
+        .notebook-reload {
+            background-color: #007bff;
+            color: white;
+            border: none;
+            padding: 8px 15px;
+            border-radius: 4px;
+            margin-left: 10px;
+            cursor: pointer;
+        }
+        
+        .notebook-reload:hover {
+            background-color: #0056b3;
+        }
+    </style>
 </head>
 <body>
     <div class="header">
         <select id="notebookSelect" class="notebook-select">
             <!-- Notebooks will be populated dynamically -->
         </select>
+        <button id="reloadNotebook" class="notebook-reload" title="Reload current notebook">↻</button>
         <input type="text" id="searchInput" class="search-bar" placeholder="Search for keywords...">
         <div class="search-options">
             <label>
@@ -50,9 +94,53 @@
     <script src="scripts/debug.js"></script>
     <script src="scripts/main.js"></script>
     
-    <!-- Secondary: CDN fallback if local files don't load -->
+    <!-- Debugging script -->
     <script>
-        // Check if scripts loaded correctly
+        // Debug script
+        document.addEventListener('DOMContentLoaded', function() {
+            console.log('Debug script loaded');
+            
+            // Add reload button functionality
+            const reloadBtn = document.getElementById('reloadNotebook');
+            if (reloadBtn) {
+                reloadBtn.addEventListener('click', function() {
+                    if (currentNotebook) {
+                        console.log(`Reloading notebook: ${currentNotebook.id}`);
+                        // Force reset pageData
+                        pageData = [];
+                        loadNotebook(currentNotebook.id);
+                    }
+                });
+            }
+            
+            // Patching the notebook selection change handler
+            const notebookSelect = document.getElementById('notebookSelect');
+            if (notebookSelect) {
+                notebookSelect.addEventListener('change', function() {
+                    const notebookId = this.value;
+                    if (notebookId) {
+                        console.log(`Switching to notebook: ${notebookId}`);
+                        
+                        // Force reset pageData
+                        pageData = [];
+                        
+                        // Reset current notebook
+                        currentNotebook = null;
+                        
+                        // Clear container
+                        const container = document.getElementById('notebookContainer');
+                        container.innerHTML = '<div class="loading" id="loadingMessage">Loading notebook data...</div>';
+                        
+                        // Load the selected notebook
+                        setTimeout(() => {
+                            loadNotebook(notebookId);
+                        }, 100);
+                    }
+                });
+            }
+        });
+        
+        // Fallback CDN script loading
         window.addEventListener('load', function() {
             setTimeout(function() {
                 // If notebooksConfig is not defined or initializeNotebookViewer is not a function,
