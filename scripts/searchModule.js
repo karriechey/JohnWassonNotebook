@@ -105,8 +105,8 @@ function performSearch() {
     // Update search results UI
     updateSearchResultsUI();
     
-    // Update floating search navigation
-    updateFloatingSearchNav();
+    // Show floating navigation
+    showFloatingNav();
     
     // Navigate to first result if found
     if (searchState.matches.length > 0) {
@@ -169,11 +169,8 @@ function clearSearchHighlights() {
     // Hide search results UI
     document.getElementById('searchResults').style.display = 'none';
     
-    // Hide floating search navigation
-    const floatingNav = document.getElementById('floatingSearchNav');
-    if (floatingNav) {
-        floatingNav.classList.remove('active');
-    }
+    // Hide floating navigation
+    hideFloatingNav();
 }
 
 // Update search results UI
@@ -203,6 +200,8 @@ function updateSearchResultsUI() {
 // Navigate search results
 function navigateSearchResults(direction) {
     const matches = searchState.matches;
+    
+    console.log(`Navigating ${direction}, current index: ${searchState.currentMatchIndex}, total matches: ${matches.length}`);
     
     if (matches.length === 0) {
         return;
@@ -254,166 +253,73 @@ function navigateSearchResults(direction) {
     // Update UI
     updateSearchResultsUI();
     
-    // Update floating search navigation
-    updateFloatingSearchNav();
+    // Update floating navigation counter
+    updateFloatingNavCounter();
 }
 
-// Initialize the floating search navigation
-function initFloatingSearchNav() {
-    // Check if the floating nav already exists
-    if (document.getElementById('floatingSearchNav')) {
-        return; // Already initialized
-    }
-    
-    // Create the floating navigation element
-    const floatingNav = document.createElement('div');
-    floatingNav.id = 'floatingSearchNav';
-    floatingNav.className = 'floating-search-nav';
-    floatingNav.innerHTML = `
-        <button id="floatingPrevResult" title="Previous result">↑</button>
-        <div id="floatingCurrentResult" class="count">0/0</div>
-        <button id="floatingNextResult" title="Next result">↓</button>
-        <button id="floatingClearSearch" class="close-btn" title="Clear search">×</button>
-    `;
-    
-    // Add the element to the body
-    document.body.appendChild(floatingNav);
-    
-    // Add styles for the floating navigation
-    const style = document.createElement('style');
-    style.textContent = `
-        .floating-search-nav {
-            position: fixed;
-            bottom: 20px;
-            left: 50%;
-            transform: translateX(-50%);
-            display: flex;
-            align-items: center;
-            background-color: rgba(0, 0, 0, 0.7);
-            color: white;
-            padding: 10px 15px;
-            border-radius: 30px;
-            box-shadow: 0 3px 10px rgba(0, 0, 0, 0.2);
-            z-index: 1000;
-            transition: opacity 0.3s, transform 0.3s;
-            opacity: 0;
-            pointer-events: none;
-            gap: 10px;
-        }
-        
-        .floating-search-nav.active {
-            opacity: 1;
-            pointer-events: all;
-            transform: translateX(-50%) translateY(0);
-        }
-        
-        .floating-search-nav button {
-            background-color: transparent;
-            border: 1px solid rgba(255, 255, 255, 0.5);
-            color: white;
-            width: 36px;
-            height: 36px;
-            border-radius: 50%;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            cursor: pointer;
-            font-size: 16px;
-            transition: background-color 0.2s;
-        }
-        
-        .floating-search-nav button:hover {
-            background-color: rgba(255, 255, 255, 0.2);
-        }
-        
-        .floating-search-nav button:disabled {
-            opacity: 0.5;
-            cursor: not-allowed;
-        }
-        
-        .floating-search-nav .count {
-            padding: 0 10px;
-            font-size: 14px;
-            font-weight: bold;
-        }
-        
-        .floating-search-nav .close-btn {
-            font-size: 18px;
-            margin-left: 5px;
-        }
-    `;
-    document.head.appendChild(style);
-    
-    // Set up event listeners
-    const floatingPrevBtn = document.getElementById('floatingPrevResult');
-    const floatingNextBtn = document.getElementById('floatingNextResult');
-    const floatingClearBtn = document.getElementById('floatingClearSearch');
-    
-    floatingPrevBtn.addEventListener('click', function() {
-        navigateSearchResults('prev');
-    });
-    
-    floatingNextBtn.addEventListener('click', function() {
-        navigateSearchResults('next');
-    });
-    
-    floatingClearBtn.addEventListener('click', function() {
-        clearSearchHighlights();
-    });
-    
-    // Add keyboard support for the floating navigation
-    document.addEventListener('keydown', function(event) {
-        // Only handle when search is active
-        if (!floatingNav.classList.contains('active')) return;
-        
-        if (event.key === 'ArrowDown' || event.key === 'ArrowRight') {
-            navigateSearchResults('next');
-            event.preventDefault();
-        } else if (event.key === 'ArrowUp' || event.key === 'ArrowLeft') {
-            navigateSearchResults('prev');
-            event.preventDefault();
-        } else if (event.key === 'Escape') {
-            clearSearchHighlights();
-            event.preventDefault();
-        }
-    });
-}
-
-// Update the floating search navigation
-function updateFloatingSearchNav() {
-    // Ensure the floating nav is initialized
-    if (!document.getElementById('floatingSearchNav')) {
-        initFloatingSearchNav();
-    }
-    
+// Show the floating navigation
+function showFloatingNav() {
     const floatingNav = document.getElementById('floatingSearchNav');
-    const floatingCountDisplay = document.getElementById('floatingCurrentResult');
-    const floatingPrevBtn = document.getElementById('floatingPrevResult');
-    const floatingNextBtn = document.getElementById('floatingNextResult');
-    
-    if (!floatingNav || !floatingCountDisplay || !floatingPrevBtn || !floatingNextBtn) {
-        return;
-    }
-    
-    const resultsCount = searchState.matches.length;
-    
-    if (resultsCount > 0) {
-        // Show the floating navigation
+    if (floatingNav && searchState.matches.length > 0) {
         floatingNav.classList.add('active');
-        
-        // Update the counter
-        floatingCountDisplay.textContent = `${searchState.currentMatchIndex + 1}/${resultsCount}`;
-        
-        // Enable/disable buttons
-        floatingPrevBtn.disabled = searchState.currentMatchIndex <= 0;
-        floatingNextBtn.disabled = searchState.currentMatchIndex >= resultsCount - 1;
-    } else {
-        // Hide the floating navigation
+        updateFloatingNavCounter();
+    }
+}
+
+// Hide the floating navigation
+function hideFloatingNav() {
+    const floatingNav = document.getElementById('floatingSearchNav');
+    if (floatingNav) {
         floatingNav.classList.remove('active');
     }
 }
 
-// Initialize floating search navigation when DOM is loaded
+// Update the counter in the floating navigation
+function updateFloatingNavCounter() {
+    const floatingCurrentResult = document.getElementById('floatingCurrentResult');
+    const floatingPrevBtn = document.getElementById('floatingPrevResult');
+    const floatingNextBtn = document.getElementById('floatingNextResult');
+    
+    if (floatingCurrentResult && searchState.matches.length > 0) {
+        floatingCurrentResult.textContent = `${searchState.currentMatchIndex + 1}/${searchState.matches.length}`;
+    }
+    
+    if (floatingPrevBtn) {
+        floatingPrevBtn.disabled = searchState.currentMatchIndex <= 0;
+    }
+    
+    if (floatingNextBtn) {
+        floatingNextBtn.disabled = searchState.currentMatchIndex >= searchState.matches.length - 1;
+    }
+}
+
+// Set up event listeners once the DOM is loaded
 document.addEventListener('DOMContentLoaded', function() {
-    initFloatingSearchNav();
+    const floatingPrevBtn = document.getElementById('floatingPrevResult');
+    const floatingNextBtn = document.getElementById('floatingNextResult');
+    const floatingClearBtn = document.getElementById('floatingClearSearch');
+    
+    if (floatingPrevBtn) {
+        floatingPrevBtn.addEventListener('click', function(event) {
+            event.preventDefault();
+            console.log('Previous button clicked');
+            navigateSearchResults('prev');
+        });
+    }
+    
+    if (floatingNextBtn) {
+        floatingNextBtn.addEventListener('click', function(event) {
+            event.preventDefault();
+            console.log('Next button clicked');
+            navigateSearchResults('next');
+        });
+    }
+    
+    if (floatingClearBtn) {
+        floatingClearBtn.addEventListener('click', function(event) {
+            event.preventDefault();
+            console.log('Clear button clicked');
+            clearSearchHighlights();
+        });
+    }
 });

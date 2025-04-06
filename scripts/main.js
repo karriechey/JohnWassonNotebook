@@ -16,6 +16,38 @@ function initializeNotebookViewer() {
 }
 
 
+//  Refresh button: to make it go back to the top of the page when clicked
+
+document.addEventListener('DOMContentLoaded', function() {
+    // Get the refresh button
+    const refreshBtn = document.getElementById('clearSearch') || document.getElementById('reloadNotebook');
+    
+    if (refreshBtn) {
+        // Update the button's tooltip and title
+        refreshBtn.title = 'Back to top';
+        refreshBtn.setAttribute('aria-label', 'Back to top');
+        
+        // Remove any existing event listeners by cloning and replacing the button
+        refreshBtn.replaceWith(refreshBtn.cloneNode(true));
+        
+        // Get the fresh element reference
+        const freshBtn = document.getElementById('clearSearch') || document.getElementById('reloadNotebook');
+        
+        // Add the new event listener
+        freshBtn.addEventListener('click', function(event) {
+            event.preventDefault();
+            
+            console.log('Back to top button clicked');
+            
+            // Scroll to the top of the page
+            window.scrollTo({
+                top: 0,
+                behavior: 'smooth'
+            });
+        });
+    }
+});
+
 
 // Future authentication and GitHub API integration functions will go here
 // Examples:
