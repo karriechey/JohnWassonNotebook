@@ -67,20 +67,20 @@
         </div>
     </div>
 
-    <!-- Add to index.html, in the header div -->
+    <div id="floatingEditControls" class="floating-edit-controls">
+        <button id="floatingSaveChanges" class="save-button" data-tooltip="Save Changes">💾</button>
+        <button id="floatingCancelEditing" class="cancel-button" data-tooltip="Cancel">✖</button>
+    </div>
+    
     <div class="auth-controls">
         <button id="editModeToggle" class="edit-button">Edit Mode</button>
         <div id="authModal" class="modal">
-        <div class="modal-content">
-            <span class="close">&times;</span>
-            <h2>Authentication Required</h2>
-            <input type="password" id="editorPassword" placeholder="Enter editor password">
-            <button id="authSubmit">Submit</button>
-        </div>
-        </div>
-        <div id="editControls" class="edit-controls hidden">
-        <button id="saveChanges" class="save-button">Save Changes</button>
-        <button id="cancelEditing" class="cancel-button">Cancel</button>
+            <div class="modal-content">
+                <span class="close">&times;</span>
+                <h2>Authentication Required</h2>
+                <input type="password" id="editorPassword" placeholder="Enter editor password">
+                <button id="authSubmit">Submit</button>
+            </div>
         </div>
     </div>
 

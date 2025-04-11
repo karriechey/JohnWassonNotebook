@@ -27,13 +27,16 @@ const editorConfig = {
 function initializeEditor() {
     console.log("Initializing editor module...");
     
+    // Add floating edit controls to the page
+    addFloatingEditControls();
+    
     // Set up event listeners
     const editModeToggle = document.getElementById('editModeToggle');
     const authModal = document.getElementById('authModal');
     const closeModal = document.querySelector('.close');
     const authSubmit = document.getElementById('authSubmit');
-    const saveChanges = document.getElementById('saveChanges');
-    const cancelEditing = document.getElementById('cancelEditing');
+    const saveChanges = document.getElementById('floatingSaveChanges');
+    const cancelEditing = document.getElementById('floatingCancelEditing');
     
     // Edit mode toggle
     editModeToggle.addEventListener('click', () => {
@@ -87,6 +90,146 @@ function initializeEditor() {
             makeContentEditable();
         }
     });
+    
+    // Update back-to-top button position when in edit mode
+    updateBackToTopButtonPosition();
+}
+
+// Add floating edit controls to the page
+function addFloatingEditControls() {
+    // Check if floating controls already exist
+    if (document.getElementById('floatingEditControls')) {
+        return;
+    }
+    
+    // Create floating controls container
+    const floatingControls = document.createElement('div');
+    floatingControls.id = 'floatingEditControls';
+    floatingControls.className = 'floating-edit-controls';
+    
+    // Create save button
+    const saveButton = document.createElement('button');
+    saveButton.id = 'floatingSaveChanges';
+    saveButton.className = 'save-button';
+    saveButton.setAttribute('data-tooltip', 'Save Changes');
+    saveButton.innerHTML = '💾';
+    
+    // Create cancel button
+    const cancelButton = document.createElement('button');
+    cancelButton.id = 'floatingCancelEditing';
+    cancelButton.className = 'cancel-button';
+    cancelButton.setAttribute('data-tooltip', 'Cancel');
+    cancelButton.innerHTML = '✖';
+    
+    // Add buttons to container
+    floatingControls.appendChild(saveButton);
+    floatingControls.appendChild(cancelButton);
+    
+    // Add container to body
+    document.body.appendChild(floatingControls);
+    
+    // Add CSS for floating controls
+    addFloatingControlsStyles();
+}
+
+// Add CSS for floating controls
+function addFloatingControlsStyles() {
+    // Check if styles already exist
+    if (document.getElementById('floatingControlsStyles')) {
+        return;
+    }
+    
+    // Create style element
+    const style = document.createElement('style');
+    style.id = 'floatingControlsStyles';
+    
+    // Add CSS
+    style.textContent = `
+    /* Floating edit controls */
+    .floating-edit-controls {
+        position: fixed;
+        bottom: 20px;
+        right: 20px;
+        display: flex;
+        flex-direction: column;
+        gap: 10px;
+        z-index: 1000;
+        transition: opacity 0.3s, transform 0.3s;
+        opacity: 0;
+        transform: translateY(20px);
+        pointer-events: none;
+    }
+
+    .floating-edit-controls.active {
+        opacity: 1;
+        transform: translateY(0);
+        pointer-events: all;
+    }
+
+    .floating-edit-controls button {
+        width: 60px;
+        height: 60px;
+        border-radius: 50%;
+        border: none;
+        color: white;
+        font-size: 24px;
+        cursor: pointer;
+        box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        transition: transform 0.2s, background-color 0.2s;
+    }
+
+    .floating-edit-controls button:hover {
+        transform: translateY(-5px);
+    }
+
+    .floating-edit-controls .save-button {
+        background-color: #4CAF50;
+    }
+
+    .floating-edit-controls .save-button:hover {
+        background-color: #45a049;
+    }
+
+    .floating-edit-controls .cancel-button {
+        background-color: #f44336;
+    }
+
+    .floating-edit-controls .cancel-button:hover {
+        background-color: #d32f2f;
+    }
+
+    /* Add a tooltip for buttons */
+    .floating-edit-controls button {
+        position: relative;
+    }
+
+    .floating-edit-controls button::after {
+        content: attr(data-tooltip);
+        position: absolute;
+        right: 70px;
+        top: 50%;
+        transform: translateY(-50%);
+        background-color: rgba(0, 0, 0, 0.7);
+        color: white;
+        padding: 5px 10px;
+        border-radius: 4px;
+        font-size: 14px;
+        white-space: nowrap;
+        opacity: 0;
+        pointer-events: none;
+        transition: opacity 0.2s;
+    }
+
+    .floating-edit-controls button:hover::after {
+        opacity: 1;
+    }
+    `;
+    
+    // Add style to head
+    document.head.appendChild(style);
 }
 
 // Enable edit mode
@@ -95,7 +238,7 @@ function enableEditMode() {
     
     // Update UI
     document.getElementById('editModeToggle').classList.add('active');
-    document.getElementById('editControls').classList.remove('hidden');
+    document.getElementById('floatingEditControls').classList.add('active');
     
     // Set editing state
     editorConfig.state.isEditing = true;
@@ -108,6 +251,9 @@ function enableEditMode() {
     
     // Show notification
     showNotification("Edit mode enabled. Click on text to make changes.");
+    
+    // Update back-to-top button position
+    updateBackToTopButtonPosition();
 }
 
 // Disable edit mode
@@ -116,7 +262,7 @@ function disableEditMode() {
     
     // Update UI
     document.getElementById('editModeToggle').classList.remove('active');
-    document.getElementById('editControls').classList.add('hidden');
+    document.getElementById('floatingEditControls').classList.remove('active');
     
     // Reset editing state
     editorConfig.state.isEditing = false;
@@ -133,7 +279,7 @@ function disableEditMode() {
             // User cancelled, stay in edit mode
             editorConfig.state.isEditing = true;
             document.getElementById('editModeToggle').classList.add('active');
-            document.getElementById('editControls').classList.remove('hidden');
+            document.getElementById('floatingEditControls').classList.add('active');
             return;
         }
     } else {
@@ -146,6 +292,21 @@ function disableEditMode() {
     
     // Show notification
     showNotification("Edit mode disabled.");
+    
+    // Update back-to-top button position
+    updateBackToTopButtonPosition();
+}
+
+// Update back-to-top button position to avoid overlap with floating edit controls
+function updateBackToTopButtonPosition() {
+    const backToTopBtn = document.getElementById('backToTop');
+    if (!backToTopBtn) return;
+    
+    if (editorConfig.state.isEditing) {
+        backToTopBtn.style.bottom = '100px'; // Move up to avoid overlap
+    } else {
+        backToTopBtn.style.bottom = '20px'; // Restore original position
+    }
 }
 
 // Make page content editable
@@ -208,12 +369,18 @@ function makeContentNonEditable() {
     textElements.forEach(element => {
         element.contentEditable = 'false';
         element.classList.remove('editable', 'content-changed');
+        
+        // Remove input event listeners
+        element.replaceWith(element.cloneNode(true));
     });
     
     // Make titles non-editable
     titleElements.forEach(element => {
         element.contentEditable = 'false';
         element.classList.remove('editable', 'content-changed');
+        
+        // Remove input event listeners
+        element.replaceWith(element.cloneNode(true));
     });
 }
 
@@ -229,6 +396,13 @@ async function saveContentToGitHub() {
     
     if (!hasChanges) {
         showNotification("No changes detected to save.");
+        return;
+    }
+    
+    // Get commit message
+    const commitMessage = prompt("Please enter a description of your changes:", "Update notebook content");
+    if (!commitMessage) {
+        // User cancelled
         return;
     }
     
@@ -255,7 +429,7 @@ async function saveContentToGitHub() {
         const updatedContent = await prepareUpdatedContent(notebook);
         
         // Create a GitHub pull request
-        const result = await createGitHubPullRequest(token, notebook, updatedContent);
+        const result = await createGitHubPullRequest(token, notebook, updatedContent, commitMessage);
         
         if (result.success) {
             showNotification(`Changes saved successfully! Pull request #${result.prNumber} created.`);
@@ -283,6 +457,10 @@ async function prepareUpdatedContent(notebook) {
     // Get current file content from GitHub
     const currentFileContent = await fetchFileContent(notebook.dataFile);
     
+    if (!currentFileContent) {
+        throw new Error("Failed to retrieve current file content");
+    }
+    
     // Parse the content into pages
     const pages = parseFileContentIntoPages(currentFileContent);
     
@@ -302,12 +480,21 @@ async function prepareUpdatedContent(notebook) {
     });
     
     // Reassemble the file content
-    return assembleFileContent(pages);
+    return assembleFileContent(pages, notebook);
 }
 
 // Parse file content into pages
 function parseFileContentIntoPages(content) {
     const pages = [];
+    
+    // First, check if the file has a header line
+    let headerLine = "";
+    const headerMatch = content.match(/^=== \*\*Filename: (.*?)\*\*/);
+    if (headerMatch) {
+        headerLine = headerMatch[0];
+    }
+    
+    // Parse pages
     const pageRegex = /=== \*\*Page: (\d+) of \d+\*\*\s*\n\s*(.*?)\s*\n\s*([\s\S]*?)(?=(?:=== \*\*Page:|$))/g;
     
     let match;
@@ -323,12 +510,29 @@ function parseFileContentIntoPages(content) {
         };
     }
     
+    // If no pages were found but we have content, try a simpler approach
+    if (pages.length === 0 && content.trim().length > 0) {
+        // Split by double newlines
+        const chunks = content.split(/\n\n+/);
+        if (chunks.length > 1) {
+            // Assume first chunk is title
+            const title = chunks[0].trim();
+            const pageContent = chunks.slice(1).join("\n\n");
+            
+            pages.push({
+                number: 1,
+                title: title,
+                content: pageContent
+            });
+        }
+    }
+    
     return pages;
 }
 
 // Assemble file content from pages
-function assembleFileContent(pages) {
-    let content = `=== **Filename: ${currentNotebook.id}.pdf**\n`;
+function assembleFileContent(pages, notebook) {
+    let content = `=== **Filename: ${notebook.id}.pdf**\n`;
     
     pages.forEach(page => {
         content += `=== **Page: ${page.number} of ${pages.length}**\n\n${page.title}\n\n${page.content}\n\n`;
@@ -339,13 +543,25 @@ function assembleFileContent(pages) {
 
 // Fetch file content from GitHub
 async function fetchFileContent(filePath) {
-    // In a real implementation, this would use the GitHub API
-    // For now, we'll use the current pageData
     return new Promise((resolve) => {
-        // Get the data file URL
-        const fileUrl = `${notebooksConfig.baseUrl}${filePath}`;
+        // First try to fetch from GitHub API using the current data in memory
+        if (pageData && pageData.length > 0) {
+            try {
+                const content = pageDataToFileContent();
+                if (content) {
+                    console.log("Using in-memory page data for file content");
+                    resolve(content);
+                    return;
+                }
+            } catch (error) {
+                console.warn("Failed to convert page data to file content:", error);
+            }
+        }
         
-        // Fetch the file
+        // If that fails, fetch from the raw URL
+        const fileUrl = `${notebooksConfig.baseUrl}${filePath}`;
+        console.log(`Fetching file content from: ${fileUrl}`);
+        
         fetch(fileUrl)
             .then(response => {
                 if (!response.ok) {
@@ -363,8 +579,24 @@ async function fetchFileContent(filePath) {
     });
 }
 
+// Convert current pageData to file content
+function pageDataToFileContent() {
+    if (!pageData || !pageData.length || !currentNotebook) {
+        return null;
+    }
+    
+    let content = `=== **Filename: ${currentNotebook.id}.pdf**\n`;
+    
+    pageData.forEach((page, index) => {
+        const pageNumber = index + 1;
+        content += `=== **Page: ${pageNumber} of ${pageData.length}**\n\n${page.title}\n\n${page.content}\n\n`;
+    });
+    
+    return content;
+}
+
 // Create a GitHub pull request
-async function createGitHubPullRequest(token, notebook, updatedContent) {
+async function createGitHubPullRequest(token, notebook, updatedContent, commitMessage) {
     try {
         // 1. Get the current commit SHA for the target branch
         const branchData = await fetch(`${editorConfig.github.apiBase}/repos/${editorConfig.github.owner}/${editorConfig.github.repo}/branches/main`, {
@@ -393,7 +625,15 @@ async function createGitHubPullRequest(token, notebook, updatedContent) {
             })
         });
         
-        // 3. Update the file in the new branch
+        // 3. Get the current file to get its SHA
+        const fileData = await fetch(`${editorConfig.github.apiBase}/repos/${editorConfig.github.owner}/${editorConfig.github.repo}/contents/${notebook.dataFile}`, {
+            headers: {
+                'Authorization': `token ${token}`,
+                'Accept': 'application/vnd.github.v3+json'
+            }
+        }).then(res => res.json());
+        
+        // 4. Update the file in the new branch
         const fileResponse = await fetch(`${editorConfig.github.apiBase}/repos/${editorConfig.github.owner}/${editorConfig.github.repo}/contents/${notebook.dataFile}`, {
             method: 'PUT',
             headers: {
@@ -402,13 +642,14 @@ async function createGitHubPullRequest(token, notebook, updatedContent) {
                 'Content-Type': 'application/json'
             },
             body: JSON.stringify({
-                message: `Update ${notebook.id} notebook content`,
-                content: btoa(updatedContent), // Base64 encode the content
+                message: commitMessage || `Update ${notebook.id} notebook content`,
+                content: btoa(unescape(encodeURIComponent(updatedContent))), // Base64 encode the content properly for UTF-8
+                sha: fileData.sha,
                 branch: newBranchName
             })
         }).then(res => res.json());
         
-        // 4. Create a pull request
+        // 5. Create a pull request
         const pullRequestData = await fetch(`${editorConfig.github.apiBase}/repos/${editorConfig.github.owner}/${editorConfig.github.repo}/pulls`, {
             method: 'POST',
             headers: {
@@ -417,7 +658,7 @@ async function createGitHubPullRequest(token, notebook, updatedContent) {
                 'Content-Type': 'application/json'
             },
             body: JSON.stringify({
-                title: `Update ${notebook.title} content`,
+                title: commitMessage || `Update ${notebook.title} content`,
                 body: 'These changes were made using the in-page editor.',
                 head: newBranchName,
                 base: 'main'
@@ -440,14 +681,37 @@ async function createGitHubPullRequest(token, notebook, updatedContent) {
 
 // Get GitHub token
 async function getGitHubToken() {
-    // In a real implementation, this would securely obtain the token
-    // This is a mockup for demonstration purposes
+    // In a real implementation, you would get the token from a more secure source
     
-    // Option 1: Get token from a secure server endpoint
-    // return fetch('/api/github-token').then(res => res.text());
+    // First try to get token from sessionStorage if it exists
+    let token = sessionStorage.getItem('github_token');
     
-    // Option 2: Prompt user to enter their personal access token
-    const token = prompt("Please enter your GitHub Personal Access Token with repo scope:", "");
+    if (!token) {
+        // Show more detailed instructions to the user
+        const instructions = `
+To save changes to GitHub, you need a Personal Access Token (PAT).
+
+How to get a token:
+1. Go to GitHub → Settings → Developer settings → Personal access tokens → Tokens (classic)
+2. Click "Generate new token (classic)"
+3. Give it a name like "Meteorite Notebook Editor"
+4. Select at least the "repo" scope
+5. Click "Generate token"
+6. Copy the token and paste it below
+
+Your token will be stored in your browser for this session only.
+`;
+        
+        alert(instructions);
+        
+        // Prompt user to enter their personal access token
+        token = prompt("Please enter your GitHub Personal Access Token with repo scope:", "");
+        
+        if (token) {
+            // Store in sessionStorage for the duration of the browser session
+            sessionStorage.setItem('github_token', token);
+        }
+    }
     
     return token;
 }
@@ -477,6 +741,9 @@ function showNotification(message, isLoading = false, isError = false) {
     // Add to body
     document.body.appendChild(notification);
     
+    // Add notification styles if not already added
+    addNotificationStyles();
+    
     // Auto remove after 5 seconds unless it's a loading notification
     if (!isLoading) {
         setTimeout(() => {
@@ -492,6 +759,116 @@ function showNotification(message, isLoading = false, isError = false) {
     }
     
     return notification;
+}
+
+// Add notification styles
+function addNotificationStyles() {
+    // Check if styles already exist
+    if (document.getElementById('notificationStyles')) {
+        return;
+    }
+    
+    // Create style element
+    const style = document.createElement('style');
+    style.id = 'notificationStyles';
+    
+    // Add CSS
+    style.textContent = `
+    /* Notification */
+    .editor-notification {
+        position: fixed;
+        bottom: 20px;
+        left: 20px;
+        background-color: #4CAF50;
+        color: white;
+        padding: 15px 20px;
+        border-radius: 5px;
+        box-shadow: 0 2px 10px rgba(0, 0, 0, 0.2);
+        z-index: 1000;
+        animation: slideIn 0.3s ease-out;
+    }
+
+    .editor-notification.error {
+        background-color: #f44336;
+    }
+
+    .editor-notification.loading {
+        background-color: #2196F3;
+    }
+
+    .editor-notification.loading::after {
+        content: "...";
+        animation: dots 1.5s infinite;
+    }
+
+    .editor-notification.fade-out {
+        animation: fadeOut 0.5s ease-out forwards;
+    }
+
+    @keyframes slideIn {
+        from {
+            transform: translateX(-100px);
+            opacity: 0;
+        }
+        to {
+            transform: translateX(0);
+            opacity: 1;
+        }
+    }
+
+    @keyframes fadeOut {
+        from {
+            opacity: 1;
+        }
+        to {
+            opacity: 0;
+        }
+    }
+
+    @keyframes dots {
+        0% { content: "."; }
+        33% { content: ".."; }
+        66% { content: "..."; }
+    }
+
+    /* Editable content styles */
+    .editable {
+        border: 1px dashed #ccc;
+        padding: 10px;
+        background-color: #f9f9f9;
+        min-height: 30px;
+    }
+
+    .editable:focus {
+        border-color: #2196F3;
+        outline: none;
+        background-color: white;
+    }
+
+    .content-changed {
+        background-color: #e8f5e9;
+    }
+
+    .edit-mode .page-section {
+        position: relative;
+    }
+
+    .edit-mode .page-section::before {
+        content: 'Editable';
+        position: absolute;
+        top: 5px;
+        right: 5px;
+        background-color: #2196F3;
+        color: white;
+        padding: 3px 8px;
+        border-radius: 3px;
+        font-size: 12px;
+        z-index: 10;
+    }
+    `;
+    
+    // Add style to head
+    document.head.appendChild(style);
 }
 
 // Export functions for global use
