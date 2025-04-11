@@ -38,5 +38,6 @@ To save changes, you'll need a GitHub Personal Access Token (PAT) with "repo" sc
 4. Select the "repo" scope
 5. Click "Generate token"
 6. Copy the token to use in the editor
+->The token looks like a long string of characters, for example: ghp_aBcDeFgHiJkLmNoPqRsTuVwXyZ1234567890
 
 Note: Your token is only stored in your browser for the current session.
