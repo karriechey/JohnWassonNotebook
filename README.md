@@ -1,7 +1,7 @@
-# JohnWassonNotebook
+## JohnWassonNotebook
 https://karriechey.github.io/JohnWassonNotebook/
 
-# In-Page Editing System
+## In-Page Editing System
 
 This repository includes an in-page editing system that allows authorized users to make changes to notebook content directly in the browser and submit those changes as GitHub pull requests.
 
