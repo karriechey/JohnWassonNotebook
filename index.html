@@ -66,6 +66,24 @@
             <button id="searchButton">Search</button>
         </div>
     </div>
+
+    <!-- Add to index.html, in the header div -->
+    <div class="auth-controls">
+        <button id="editModeToggle" class="edit-button">Edit Mode</button>
+        <div id="authModal" class="modal">
+        <div class="modal-content">
+            <span class="close">&times;</span>
+            <h2>Authentication Required</h2>
+            <input type="password" id="editorPassword" placeholder="Enter editor password">
+            <button id="authSubmit">Submit</button>
+        </div>
+        </div>
+        <div id="editControls" class="edit-controls hidden">
+        <button id="saveChanges" class="save-button">Save Changes</button>
+        <button id="cancelEditing" class="cancel-button">Cancel</button>
+        </div>
+    </div>
+
     
     <h1 class="notebook-title" id="notebookTitle">Loading Notebook...</h1>
     
@@ -101,6 +119,7 @@
     <script src="scripts/eventHandelers.js"></script>
     <script src="scripts/debug.js"></script>
     <script src="scripts/main.js"></script>
+    <script src="scripts/editorModule.js"></script>
     
     <!-- Debugging script -->
     <script>

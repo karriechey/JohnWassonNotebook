@@ -295,3 +295,205 @@ mark {
         width: 90%;
     }
 }
+
+/* Editor styles */
+.auth-controls {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+.edit-button {
+    background-color: #4CAF50;
+    color: white;
+    border: none;
+    padding: 8px 15px;
+    border-radius: 4px;
+    cursor: pointer;
+    transition: background-color 0.3s;
+}
+
+.edit-button:hover {
+    background-color: #45a049;
+}
+
+.edit-button.active {
+    background-color: #2196F3;
+}
+
+.edit-controls {
+    display: flex;
+    gap: 10px;
+}
+
+.edit-controls.hidden {
+    display: none;
+}
+
+.save-button {
+    background-color: #4CAF50;
+    color: white;
+    border: none;
+    padding: 8px 15px;
+    border-radius: 4px;
+    cursor: pointer;
+}
+
+.cancel-button {
+    background-color: #f44336;
+    color: white;
+    border: none;
+    padding: 8px 15px;
+    border-radius: 4px;
+    cursor: pointer;
+}
+
+/* Modal styles */
+.modal {
+    display: none;
+    position: fixed;
+    z-index: 1000;
+    left: 0;
+    top: 0;
+    width: 100%;
+    height: 100%;
+    overflow: auto;
+    background-color: rgba(0, 0, 0, 0.4);
+}
+
+.modal-content {
+    background-color: #fefefe;
+    margin: 15% auto;
+    padding: 20px;
+    border: 1px solid #888;
+    width: 300px;
+    border-radius: 5px;
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+}
+
+.close {
+    color: #aaa;
+    float: right;
+    font-size: 28px;
+    font-weight: bold;
+    cursor: pointer;
+}
+
+.close:hover {
+    color: black;
+}
+
+.modal-content h2 {
+    margin-top: 0;
+}
+
+.modal-content input {
+    width: 100%;
+    padding: 8px;
+    margin: 10px 0;
+    box-sizing: border-box;
+    border: 1px solid #ccc;
+    border-radius: 4px;
+}
+
+.modal-content button {
+    padding: 8px 15px;
+    background-color: #4CAF50;
+    color: white;
+    border: none;
+    border-radius: 4px;
+    cursor: pointer;
+    margin-top: 10px;
+}
+
+/* Editable content styles */
+.editable {
+    border: 1px dashed #ccc;
+    padding: 10px;
+    background-color: #f9f9f9;
+    min-height: 30px;
+}
+
+.editable:focus {
+    border-color: #2196F3;
+    outline: none;
+    background-color: white;
+}
+
+.content-changed {
+    background-color: #e8f5e9;
+}
+
+.edit-mode .page-section {
+    position: relative;
+}
+
+.edit-mode .page-section::before {
+    content: 'Editable';
+    position: absolute;
+    top: 5px;
+    right: 5px;
+    background-color: #2196F3;
+    color: white;
+    padding: 3px 8px;
+    border-radius: 3px;
+    font-size: 12px;
+    z-index: 10;
+}
+
+/* Notification */
+.editor-notification {
+    position: fixed;
+    bottom: 20px;
+    right: 20px;
+    background-color: #4CAF50;
+    color: white;
+    padding: 15px 20px;
+    border-radius: 5px;
+    box-shadow: 0 2px 10px rgba(0, 0, 0, 0.2);
+    z-index: 1000;
+    animation: slideIn 0.3s ease-out;
+}
+
+.editor-notification.error {
+    background-color: #f44336;
+}
+
+.editor-notification.loading {
+    background-color: #2196F3;
+}
+
+.editor-notification.loading::after {
+    content: "...";
+    animation: dots 1.5s infinite;
+}
+
+.editor-notification.fade-out {
+    animation: fadeOut 0.5s ease-out forwards;
+}
+
+@keyframes slideIn {
+    from {
+        transform: translateX(100px);
+        opacity: 0;
+    }
+    to {
+        transform: translateX(0);
+        opacity: 1;
+    }
+}
+
+@keyframes fadeOut {
+    from {
+        opacity: 1;
+    }
+    to {
+        opacity: 0;
+    }
+}
+
+@keyframes dots {
+    0% { content: "."; }
+    33% { content: ".."; }
+    66% { content: "..."; }
+}

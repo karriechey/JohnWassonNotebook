@@ -13,6 +13,10 @@ function initializeNotebookViewer() {
     
     // Load the default notebook (AN-AR)
     loadNotebook('an-ar');
+    // Initialize the editor module if it exists
+    if (typeof window.editorModule !== 'undefined' && typeof window.editorModule.initialize === 'function') {
+    window.editorModule.initialize();
+    }
 }
 
 
